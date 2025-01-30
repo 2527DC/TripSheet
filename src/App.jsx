@@ -1,48 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DriverView from "./DriverView";
 import AdminView from "./AdminView";
+import { Login } from "./Loginpage";
+import { useAuth } from "./store/ AuthProvider";
 
-function DriverComponent() {
-  return <h1>Welcome, Driver!</h1>;
-}
-
-function AdminComponent() {
-  return <h1>Welcome, Admin!</h1>;
-}
-
-function Login({ onLogin }) {
-  const handleLogin = (role) => {
-    onLogin(role);
-  };
-
-  return (
-    <div className="login">
-      <h1>Login Page</h1>
-      <button onClick={() => handleLogin("driver")}>Login as Driver</button>
-      <button onClick={() => handleLogin("admin")}>Login as Admin</button>
-    </div>
-  );
-}
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState(null);
+  const { isAuthenticated, userRole, loading, login, logout } = useAuth();
 
-  const handleLogin = (userRole) => {
-    setRole(userRole);
-    setIsLoggedIn(true);
-  };
+  // If the app is loading, we can show a loading spinner or message
+  if (loading) return <div>Loading...</div>;
 
-  if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
+  if (!isAuthenticated) {
+    return <Login onLogin={login} />;
   }
 
   return (
     <div>
-      {role === "driver" && <DriverView />}
-      {role === "admin" && <AdminView/>}
+      {userRole === "driver" && <DriverView />}
+      {userRole === "admin" && <AdminView />}
     </div>
   );
-} 
+}
 
 export default App;

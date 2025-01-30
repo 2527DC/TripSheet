@@ -2,11 +2,13 @@
 import { InputFields } from './SmallComponents';
 import React, { useState } from 'react';
 import SignaturePad from 'react-signature-canvas';
+import { useAuth } from './store/ AuthProvider';
 
 
 const DriverView = (second) => { 
-    const [signature, setSignature] = useState(null);
-
+    let [Driversignature, setDriverSignature] = useState(null);
+  let [Guestsignature, setGuestSignature] = useState(null);
+     const {logout}= useAuth()
     const bookingdetailsInput = [
       { id: "M/s", label: "M/s", placeholder: "M/s", type: "text", required: true, name: "ms" },
       { id: "Reporting", label: "Reporting", placeholder: "Reporting", type: "text", required: true, name: "reporting" },
@@ -31,15 +33,25 @@ const DriverView = (second) => {
       openingkm: "",
       openinghr: "",
       closingkm: "",
-      closinghr: ""
+      closinghr: "",
+    
     });
   
-    const clearSignature = () => {
-      if (signature) {
-        signature.clear();
+    const clearGuestSignature = (e) => {
+      e.preventDefault(); // Prevent unintended behaviors
+      if (Driversignature) {
+        Driversignature.clear(); // Only clear the signature pad
       }
     };
-  
+    
+    const   clearDriverSignature = (e) => {
+      e.preventDefault(); // Prevent unintended behaviors
+      if (Guestsignature) {
+        
+          Guestsignature.clear(); // Only clear the signature pad
+      }
+     
+    };
     const handleInputChange = (e) => {
       const { name, type, value, files } = e.target;
   
@@ -51,13 +63,25 @@ const DriverView = (second) => {
   
     const handleSubmit = (e) => {
       e.preventDefault();
-      console.log("Form Data Submitted:", data);
-      // Log signature if available
-      if (signature) {
-        const signatureData = signature.toDataURL();
-        console.log("Signature Data:", signatureData);
-      }
-  
+    
+      // Convert signature pads to base64 URL strings
+      const driverSignatureData = Driversignature ? Driversignature.toDataURL() : null;
+      const guestSignatureData = Guestsignature ? Guestsignature.toDataURL() : null;
+    
+      // Update the form data state with the signature data
+      setFormData((prevData) => ({
+        ...prevData,
+        Driversignature: driverSignatureData, // Add driver's signature data
+        Guestsignature: guestSignatureData,   // Add guest's signature data
+      }));
+    
+      // Log the form data including the signatures
+      console.log("Form Data Submitted:", {
+        ...data,
+        Driversignature: driverSignatureData,
+        Guestsignature: guestSignatureData,
+      });
+    
       // Clear form fields
       setFormData({
         ms: "",
@@ -71,14 +95,13 @@ const DriverView = (second) => {
         openingkm: "",
         openinghr: "",
         closingkm: "",
-        closinghr: ""
+        closinghr: "",
+        Driversignature: null, // Reset signature fields
+        Guestsignature: null,
       });
-  
-      // Clear signature
-      clearSignature();
     };
-  
-
+    
+    
     return<>
      <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
@@ -91,7 +114,7 @@ const DriverView = (second) => {
             <p className="text-gray-600">Phone: +91 XXXXXXXXXX | Email: info@mltcorp.com</p>
           </div>
         </header>
-
+     <div><button title='Logout' onClick={logout}> LOgout MAcha</button></div>
         <form onSubmit={handleSubmit}>
           <div className="p-6">
             {/* Booking Details Section */}
@@ -204,7 +227,8 @@ const DriverView = (second) => {
 
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium mb-2">Totals</h3>
-                <p className="text-gray-700">Total KM: {"99"} KM</p>
+                <p className="text-gray-700"> Total KM: {Number(data.openingkm || 0) + Number(data.closingkm || 0)} KM</p>
+
                 <p className="text-gray-700">Total Hours: Calculated based on time difference</p>
               </div>
             </div>
@@ -233,22 +257,49 @@ const DriverView = (second) => {
               </ol>
             </div>
 
-            {/* Signature Section */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 ">
+            {/* Signature Section  for guest */}
+            <div className="bg-white rounded-lg border border-gray-500 p-4  ">
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Signatures</h2>
               <div className="mt-4">
                 <h3 className="text-lg font-medium mb-2">Guest Signature</h3>
-                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                <div className="border border-gray-300 rounded-lg overflow-hidden  bg-greay-600 ">
                   <SignaturePad
-                    ref={(ref) => setSignature(ref)}
+                    ref={(ref) => setDriverSignature(ref)}
                     canvasProps={{
-                      className: 'signature-canvas bg-white',
-                      style: { height: '250px' },
+                      className: 'signature-canvas bg-red-100 w-full',
+                      style: { height: '250px', 
+                    
+                      },
                     }}
                   />
                 </div>
                 <button
-                  onClick={clearSignature}
+                  onClick={ clearGuestSignature}
+                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Clear Signature
+                </button>
+              </div>
+            </div>
+
+              {/* Signature Section for driver  */}
+            <div className="bg-white rounded-lg border border-gray-500 p-4 mt-2 ">
+              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Signatures</h2>
+              <div className="mt-4">
+                <h3 className="text-lg font-medium mb-2">Driver Signature</h3>
+                <div className="border border-gray-300 rounded-lg overflow-hidden  bg-greay-600 ">
+                  <SignaturePad
+                    ref={(ref) => setGuestSignature(ref)}
+                    canvasProps={{
+                      className: 'signature-canvas bg-red-100 w-full',
+                      style: { height: '250px', 
+                    
+                      },
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={clearDriverSignature}
                   className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Clear Signature
