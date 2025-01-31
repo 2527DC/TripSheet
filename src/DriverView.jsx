@@ -1,104 +1,123 @@
 
-import { InputFields } from './SmallComponents';
-import React, { useState } from 'react';
-import SignaturePad from 'react-signature-canvas';
-import { useAuth } from './store/ AuthProvider';
+  import { InputFields } from './SmallComponents';
+  import React, { useState } from 'react';
+  import SignaturePad from 'react-signature-canvas';
+  import { useAuth } from './store/ AuthProvider';
+  import { axiosClient } from './Api/API_Client';
 
 
-const DriverView = (second) => { 
-    let [Driversignature, setDriverSignature] = useState(null);
-  let [Guestsignature, setGuestSignature] = useState(null);
-     const {logout}= useAuth()
-    const bookingdetailsInput = [
-      { id: "M/s", label: "M/s", placeholder: "M/s", type: "text", required: true, name: "ms" },
-      { id: "Reporting", label: "Reporting", placeholder: "Reporting", type: "text", required: true, name: "reporting" },
-      { id: "Bookedby", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedby" },
-    ];
-  
-    const VehicalInput = [
-      { id: "Vehicletype", label: "Vehicle Type", placeholder: "Vehicle Type", type: "text", required: true, name: "vehicletype" },
-      { id: "VehicleNo", label: "Vehicle NO", placeholder: "Vehicle NO", type: "text", required: true, name: "vehicleno" },
-      { id: "drivername", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "drivername" }
-    ];
-  
-    const [data, setFormData] = useState({
-      ms: "",
-      reporting: "",
-      bookedby: "",
-      date: "",
-      vehicletype: "",
-      vehicleno: "",
-      drivername: "",
-      journeydetails: "",
-      openingkm: "",
-      openinghr: "",
-      closingkm: "",
-      closinghr: "",
+  const DriverView = () => { 
+      let [Driversignature, setDriverSignature] = useState(null);
+    let [Guestsignature, setGuestSignature] = useState(null);
+      const {logout}= useAuth()
+      const bookingdetailsInput = [
+        { id: "M/s", label: "M/s", placeholder: "M/s", type: "text", required: true, name: "ms" },
+        { id: "Reporting", label: "Reporting", placeholder: "Reporting", type: "text", required: true, name: "reporting" },
+        { id: "bookedBy", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedBy" },
+      ];
     
-    });
-  
-    const clearGuestSignature = (e) => {
-      e.preventDefault(); // Prevent unintended behaviors
-      if (Driversignature) {
-        Driversignature.clear(); // Only clear the signature pad
-      }
-    };
+      const VehicalInput = [
+        { id: "vehicleType", label: "Vehicle Type", placeholder: "Vehicle Type", type: "text", required: true, name: "vehicleType" },
+        { id: "VehicleNo", label: "Vehicle NO", placeholder: "Vehicle NO", type: "text", required: true, name: "vehicleNo" },
+        { id: "driverName", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "driverName" }
+      ];
     
-    const   clearDriverSignature = (e) => {
-      e.preventDefault(); // Prevent unintended behaviors
-      if (Guestsignature) {
-        
-          Guestsignature.clear(); // Only clear the signature pad
-      }
-     
-    };
-    const handleInputChange = (e) => {
-      const { name, type, value, files } = e.target;
-  
-      setFormData((prevState) => ({
-        ...prevState,
-        [name]: type === "file" ? (files && files[0]) : value,
-      }));
-    };
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-    
-      // Convert signature pads to base64 URL strings
-      const driverSignatureData = Driversignature ? Driversignature.toDataURL() : null;
-      const guestSignatureData = Guestsignature ? Guestsignature.toDataURL() : null;
-    
-      // Update the form data state with the signature data
-      setFormData((prevData) => ({
-        ...prevData,
-        Driversignature: driverSignatureData, // Add driver's signature data
-        Guestsignature: guestSignatureData,   // Add guest's signature data
-      }));
-    
-      // Log the form data including the signatures
-      console.log("Form Data Submitted:", {
-        ...data,
-        Driversignature: driverSignatureData,
-        Guestsignature: guestSignatureData,
-      });
-    
-      // Clear form fields
-      setFormData({
+      const [data, setFormData] = useState({
+        vehicleType: "",
         ms: "",
         reporting: "",
-        bookedby: "",
+        bookedBy: "",
         date: "",
-        vehicletype: "",
-        vehicleno: "",
-        drivername: "",
-        journeydetails: "",
-        openingkm: "",
-        openinghr: "",
-        closingkm: "",
-        closinghr: "",
-        Driversignature: null, // Reset signature fields
-        Guestsignature: null,
+        vehicleNo: "",
+        driverName: "",
+        journeyDetails: "",
+        openKm: "",
+        openHr: "",
+        closeKm: "",
+        closeHr: "",
+        
       });
+    
+      const clearGuestSignature = (e) => {
+        e.preventDefault(); // Prevent unintended behaviors
+        if (Driversignature) {
+          Driversignature.clear(); // Only clear the signature pad
+        }
+      };
+      
+      const   clearDriverSignature = (e) => {
+        e.preventDefault(); // Prevent unintended behaviors
+        if (Guestsignature) {
+          
+            Guestsignature.clear(); // Only clear the signature pad
+        }
+      
+      };
+      const handleInputChange = (e) => {
+        const { name, type, value, files } = e.target;
+      
+        setFormData((prevState) => ({
+          ...prevState,
+          [name]: type === "file" ? (files && files[0]) : 
+                  ["openKm",  "closeKm",].includes(name) ? 
+                  Number(value) || 0 : value, // Convert specific fields to numbers
+        }));
+      };
+      
+    
+      let totalKm=Number(data.openKm || 0) + Number(data.closeKm || 0);
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        // Convert signature pads to base64 URL strings
+        const driverSignatureData = Driversignature ? Driversignature.toDataURL() : null;
+        const guestSignatureData = Guestsignature ? Guestsignature.toDataURL() : null;
+    
+        // Create a new updated form data object
+        const updatedFormData = {
+            ...data,
+            Driversignature: driverSignatureData,
+            Guestsignature: guestSignatureData,
+            totalKm:totalKm,
+            status:"pending",
+            totalHr:2,
+        };
+    
+        try {
+            const response = await axiosClient.post("addtripsheet", updatedFormData);
+            
+            if (response.data.success) {
+                console.log("Data uploaded successfully");
+            } else {
+                console.log("Data didn't upload successfully");
+            }
+        } catch (error) {
+            console.error("An error occurred:", error);
+        }
+    
+        // Log the final submitted data
+        console.log("Form Data Submitted:", updatedFormData);
+    
+        // Clear form fields after submission
+        setFormData({
+            ms: "",
+            reporting: "",
+            bookedBy: "",
+            date: "",
+            vehicleType: "",
+            vehicleNo: "",
+            driverName: "",
+            journeyDetails: "",
+            openKm: "",
+            openHr: "",
+            closeKm: "",
+            closeHr: "",
+            totalKm: "",
+            totalHr: "",
+            status: "",
+            Driversignature: null,
+            Guestsignature: null,
+        });
     };
     
     
@@ -121,7 +140,7 @@ const DriverView = (second) => {
             <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Booking Details</h2>
               <div className="space-y-4">
-                {bookingdetailsInput.map((input, index) => (
+                {bookingdetailsInput.map((input,index) => (
                   <InputFields
                     key={index}
                     id={input.id}
@@ -178,20 +197,20 @@ const DriverView = (second) => {
                     <div className="flex flex-col md:flex-row md:items-center gap-2">
                       <label className="w-32 font-medium text-gray-700">KM:</label>
                       <input
-                        name="openingkm"
+                        name="openKm"
                         type="number"
                         className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={data.openingkm || ""}
+                        value={data.openKm || ""}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="flex flex-col md:flex-row md:items-center gap-2">
                       <label className="w-32 font-medium text-gray-700">Hours:</label>
                       <input
-                        name="openinghr"
+                        name="openHr"
                         type="time"
                         className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={data.openinghr || ""}
+                        value={data.openHr || ""}
                         onChange={handleInputChange}
                       />
                     </div>
@@ -205,20 +224,20 @@ const DriverView = (second) => {
                   <div className="flex flex-col md:flex-row md:items-center gap-2">
                     <label className="w-32 font-medium text-gray-700">KM:</label>
                     <input
-                      name="closingkm"
+                      name="closeKm"
                       type="number"
                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={data.closingkm || ""}
+                      value={data.closeKm || ""}
                       onChange={handleInputChange}
                     />
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center gap-2">
                     <label className="w-32 font-medium text-gray-700">Hours:</label>
                     <input
-                      name="closinghr"
+                      name="closeHr"
                       type="time"
                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={data.closinghr || ""}
+                      value={data.closeHr || ""}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -227,7 +246,7 @@ const DriverView = (second) => {
 
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium mb-2">Totals</h3>
-                <p className="text-gray-700"> Total KM: {Number(data.openingkm || 0) + Number(data.closingkm || 0)} KM</p>
+                <p className="text-gray-700"> Total KM: {Number(data.openKm || 0) + Number(data.closeKm || 0)} KM</p>
 
                 <p className="text-gray-700">Total Hours: Calculated based on time difference</p>
               </div>
@@ -238,8 +257,8 @@ const DriverView = (second) => {
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Journey Details</h2>
               <textarea
                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                name="journeydetails"
-                value={data.journeydetails || ""}
+                name="journeyDetails"
+                value={data.journeyDetails || ""}
                 onChange={handleInputChange}
                 rows="4"
               ></textarea>
