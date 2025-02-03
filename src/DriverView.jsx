@@ -1,28 +1,27 @@
+import { InputFields } from './SmallComponents';
+import React, { useState } from 'react';
+import SignaturePad from 'react-signature-canvas';
+import { useAuth } from './store/ AuthProvider';
+import { axiosClient } from './Api/API_Client';
 
-  import { InputFields } from './SmallComponents';
-  import React, { useState } from 'react';
-  import SignaturePad from 'react-signature-canvas';
-  import { useAuth } from './store/ AuthProvider';
-  import { axiosClient } from './Api/API_Client';
-
-
-  const DriverView = () => { 
-      let [Driversignature, setDriverSignature] = useState(null);
+const DriverView = () => { 
+    let [Driversignature, setDriverSignature] = useState(null);
     let [Guestsignature, setGuestSignature] = useState(null);
-      const {logout}= useAuth()
-      const bookingdetailsInput = [
+    const { logout } = useAuth();
+
+    const bookingdetailsInput = [
         { id: "M/s", label: "M/s", placeholder: "M/s", type: "text", required: true, name: "ms" },
         { id: "Reporting", label: "Reporting", placeholder: "Reporting", type: "text", required: true, name: "reporting" },
         { id: "bookedBy", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedBy" },
-      ];
-    
-      const VehicalInput = [
+    ];
+
+    const VehicalInput = [
         { id: "vehicleType", label: "Vehicle Type", placeholder: "Vehicle Type", type: "text", required: true, name: "vehicleType" },
         { id: "VehicleNo", label: "Vehicle NO", placeholder: "Vehicle NO", type: "text", required: true, name: "vehicleNo" },
         { id: "driverName", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "driverName" }
-      ];
-    
-      const [data, setFormData] = useState({
+    ];
+
+    const [data, setFormData] = useState({
         vehicleType: "",
         ms: "",
         reporting: "",
@@ -35,105 +34,120 @@
         openHr: "",
         closeKm: "",
         closeHr: "",
-        
-      });
-    
-      const clearGuestSignature = (e) => {
-        e.preventDefault(); // Prevent unintended behaviors
-        if (Driversignature) {
-          Driversignature.clear(); // Only clear the signature pad
-        }
-      };
-      
-      const   clearDriverSignature = (e) => {
-        e.preventDefault(); // Prevent unintended behaviors
-        if (Guestsignature) {
-          
-            Guestsignature.clear(); // Only clear the signature pad
-        }
-      
-      };
-      const handleInputChange = (e) => {
-        const { name, type, value, files } = e.target;
-      
-        setFormData((prevState) => ({
-          ...prevState,
-          [name]: type === "file" ? (files && files[0]) : 
-                  ["openKm",  "closeKm",].includes(name) ? 
-                  Number(value) || 0 : value, // Convert specific fields to numbers
-        }));
-      };
-      
-    
-      let totalKm=Number(data.openKm || 0) + Number(data.closeKm || 0);
-      const handleSubmit = async (e) => {
+    });
+
+    const clearGuestSignature = (e) => {
         e.preventDefault();
-    
-        // Convert signature pads to base64 URL strings
+        if (Guestsignature) {
+            Guestsignature.clear();
+        }
+    };
+
+    const clearDriverSignature = (e) => {
+        e.preventDefault();
+        if (Driversignature) {
+            Driversignature.clear();
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, type, value, files } = e.target;
+
+        setFormData((prevState) => ({
+            ...prevState,
+            [name]: type === "file" ? (files && files[0]) : 
+                    ["openKm", "closeKm"].includes(name) ? 
+                    Number(value) || 0 : value, // Convert specific fields to numbers
+        }));
+    };
+
+    let totalKm = Number(data.openKm || 0) + Number(data.closeKm || 0);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
         const driverSignatureData = Driversignature ? Driversignature.toDataURL() : null;
         const guestSignatureData = Guestsignature ? Guestsignature.toDataURL() : null;
-    
-        // Create a new updated form data object
+
         const updatedFormData = {
             ...data,
             Driversignature: driverSignatureData,
             Guestsignature: guestSignatureData,
-            totalKm:totalKm,
-            status:"pending",
-            totalHr:2,
+            totalKm: totalKm,
+            status: "pending",
+            totalHr: 2,
         };
-    
+
         try {
             const response = await axiosClient.post("addtripsheet", updatedFormData);
             
             if (response.data.success) {
+                alert("Submitted successfully!"); // Show success message
                 console.log("Data uploaded successfully");
+
+                // Clear form fields
+                setFormData({
+                    ms: "",
+                    reporting: "",
+                    bookedBy: "",
+                    date: "",
+                    vehicleType: "",
+                    vehicleNo: "",
+                    driverName: "",
+                    journeyDetails: "",
+                    openKm: "",
+                    openHr: "",
+                    closeKm: "",
+                    closeHr: "",
+                    totalKm: "",
+                    totalHr: "",
+                    status: "",
+                    Driversignature: null,
+                    Guestsignature: null,
+                });
+
+                // Clear signatures
+                if (Driversignature) {
+                    Driversignature.clear();
+                }
+                if (Guestsignature) {
+                    Guestsignature.clear();
+                }
+
             } else {
+                alert("Submission failed! Please try again.");
                 console.log("Data didn't upload successfully");
             }
         } catch (error) {
+            alert("An error occurred while submitting.");
             console.error("An error occurred:", error);
         }
-    
-        // Log the final submitted data
+
         console.log("Form Data Submitted:", updatedFormData);
-    
-        // Clear form fields after submission
-        setFormData({
-            ms: "",
-            reporting: "",
-            bookedBy: "",
-            date: "",
-            vehicleType: "",
-            vehicleNo: "",
-            driverName: "",
-            journeyDetails: "",
-            openKm: "",
-            openHr: "",
-            closeKm: "",
-            closeHr: "",
-            totalKm: "",
-            totalHr: "",
-            status: "",
-            Driversignature: null,
-            Guestsignature: null,
-        });
     };
-    
-    
+
     return<>
      <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
         <header className="flex flex-col md:flex-row items-center p-6 border-b border-gray-200">
           <img src="/MLt.jpeg" alt="MLT Logo" className="w-24 h-24 mb-4 md:mb-0 md:mr-6" />
-          <div className="text-center md:text-left">
+          
+          <div className="text-center md:text-left flex-grow">
             <h1 className="text-2xl font-bold text-gray-800">MLT Corporate Solutions Private Limited</h1>
             <p className="text-gray-600">123 Business Park, Main Street</p>
             <p className="text-gray-600">City, State - PIN Code</p>
             <p className="text-gray-600">Phone: +91 XXXXXXXXXX | Email: info@mltcorp.com</p>
           </div>
+
+          <div className="ml-auto">
+            <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 md:px-4 md:py-2 rounded text-sm md:text-base">
+              Logout
+            </button>
+          </div>
         </header>
-     <div><button title='Logout' onClick={logout}> LOgout MAcha</button></div>
+      </div>
+
         <form onSubmit={handleSubmit}>
           <div className="p-6">
             {/* Booking Details Section */}

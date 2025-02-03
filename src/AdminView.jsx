@@ -38,8 +38,8 @@ function AdminView() {
 
   const fetchSignatures = async (driverUrl, guestUrl) => {
     try {
-      const driverImageUrl = `http://localhost:3000/get-signature/driver-b107d824-a30a-4d9a-b57f-b914bc30c815.png`;
-      const guestImageUrl = `http://localhost:3000/get-signature/driver-b107d824-a30a-4d9a-b57f-b914bc30c815.png`;
+      const driverImageUrl = `http://localhost:3000/get-signature/${driverUrl}`;
+      const guestImageUrl = `http://localhost:3000/get-signature/${guestUrl}`;
       
       setDriverSignature(driverImageUrl);
       setGuestSignature(guestImageUrl);
@@ -65,7 +65,7 @@ function AdminView() {
 
   const handleApprove = async (tripId) => {
     try {
-      await axios.patch(`https://your-backend-api.com/trips/${tripId}`, { status: "approved" });
+      await axiosClient.patch(`tripsheets/${tripId}/status`,{ status: "approved" });
       fetchTrips(page);
     } catch (error) {
       console.error("Error approving trip:", error);
@@ -74,7 +74,7 @@ function AdminView() {
 
   const handleReject = async (tripId) => {
     try {
-      await axios.patch(`https://your-backend-api.com/trips/${tripId}`, { status: "rejected" });
+      await axiosClient.patch(`tripsheets/${tripId}/status`, { status: "rejected" });
       fetchTrips(page);
     } catch (error) {
       console.error("Error rejecting trip:", error);
