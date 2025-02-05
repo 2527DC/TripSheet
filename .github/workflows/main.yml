@@ -3,7 +3,7 @@ name: Deploy React App to Hostinger
 on:
   push:
     branches:
-      - main  # Change if needed
+      - main  # Trigger deployment on pushes to the main branch
 
 jobs:
   deploy:
@@ -17,6 +17,7 @@ jobs:
         run: |
           npm install
           npm run build
+          ls -la dist  # Debugging: Check if dist/ folder exists
 
       - name: Setup SSH Key and Known Hosts
         run: |
@@ -31,6 +32,11 @@ jobs:
 
       - name: Upload React Build Files to Hostinger
         run: |
-          rsync -avz --exclude=node_modules --exclude=dist --exclude=.git --exclude=.github \
-          -e "ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002" \
-          build/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u123262960/public_html/Tripsheetweb
+          if [ -d "dist" ]; then  # Check if dist/ exists before deploying
+            rsync -avz --exclude=node_modules --exclude=build --exclude=.git --exclude=.github \
+            -e "ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002" \
+            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u123262960/public_html/Tripsheetweb
+          else
+            echo "❌ Error: dist/ folder does not exist. Check your build step!"
+            exit 1
+          fi
