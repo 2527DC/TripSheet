@@ -37,7 +37,7 @@ jobs:
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rltgoDzvO --delete"  # Rsync arguments (sync and delete old files)
+          ARGS: "-avz -e 'ssh -p 65002'"  # Rsync arguments (sync and delete old files)
           SOURCE: "build/"  # Local folder containing the production-ready files
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
