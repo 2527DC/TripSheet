@@ -3,39 +3,43 @@ name: Deploy React App to Hostinger
 on:
   push:
     branches:
-      - main  # Change if using another branch
+      - main  # Trigger on push to the 'main' branch (change if using another branch)
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code from the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Step 2: Install dependencies and build the React app
       - name: Install Dependencies & Build
         run: |
           npm install
-          npm run build  # Generate production-ready files
+          npm run build  # Generates production-ready files in the 'build/' folder
 
+      # Step 3: Ensure the deployment folder exists on Hostinger
       - name: Ensure Deployment Folder Exists on Hostinger
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 65002
+          host: ${{ secrets.SSH_HOST }}  # SSH Host (IP or domain of Hostinger server)
+          username: ${{ secrets.SSH_USER }}  # SSH Username
+          key: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH Private Key (ensure it's stored as GitHub secret)
+          port: 22  # Default SSH port (change if needed)
           script: |
-            mkdir -p /home/u123262960/public_html/Tripsheetweb
+            mkdir -p /home/u123262960/public_html/Tripsheetweb  # Make sure the folder exists on the server
             exit
-      
+
+      # Step 4: Upload React Build Files to Hostinger
       - name: Upload React Build Files to Hostinger
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rltgoDzvO --delete"
-          SOURCE: "build/"   # The React build folder
+          ARGS: "-rltgoDzvO --delete"  # Rsync arguments (sync and delete old files)
+          SOURCE: "build/"  # Local folder containing the production-ready files
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
-          TARGET: "/home/u123262960/public_html/Tripsheetweb"  # Correct deployment path
-          EXCLUDE: "/node_modules/ /dist/ .git/ .github/"
+          TARGET: "/home/u123262960/public_html/Tripsheetweb"  # Target folder on Hostinger
+          EXCLUDE: "/node_modules/ /dist/ .git/ .github/"  # Exclude unnecessary files/folders from the upload
