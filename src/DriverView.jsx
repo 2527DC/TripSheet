@@ -1,13 +1,39 @@
 import { InputFields } from './SmallComponents';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SignaturePad from 'react-signature-canvas';
 import { useAuth } from './store/ AuthProvider';
 import { axiosClient } from './Api/API_Client';
+import { useLocation } from 'react-router-dom';
 
 const DriverView = () => { 
     let [Driversignature, setDriverSignature] = useState(null);
     let [Guestsignature, setGuestSignature] = useState(null);
     const { logout } = useAuth();
+    const [tripDetails, setTripDetails] = useState(null);
+    const location = useLocation();
+    const [visible,setvisible]=useState(true)
+    // Extract the tripId from the URL
+    const queryParams = new URLSearchParams(location.search);
+    const tripId = queryParams.get('formId');
+    useEffect(() => {
+      const fetchTripDetails = async () => {
+        if (tripId) {
+          try {
+            const response = await axiosClient.get(`/form/${tripId}`);
+            if (response.status===200) {
+              console.log("");
+              
+            }
+            setTripDetails(response.data.data);
+          } catch (error) {
+            console.error('Error fetching trip details:', error);
+          }
+        }
+      };
+  
+      fetchTripDetails();
+    }, [tripId]);
+  
 
     const bookingdetailsInput = [
         { id: "M/s", label: "M/s", placeholder: "M/s", type: "text", required: true, name: "ms" },
@@ -127,7 +153,7 @@ const DriverView = () => {
     };
 
     return<>
-     <div className="min-h-screen bg-gray-50 py-8 px-4">
+    {visible?( <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
         <header className="flex flex-col md:flex-row items-center p-6 border-b border-gray-200">
@@ -353,7 +379,7 @@ const DriverView = () => {
           </div>
         </form>
       </div>
-    </div></>
+    </div>):( <p>Loading trip details...</p>)}</>
 }
 
 

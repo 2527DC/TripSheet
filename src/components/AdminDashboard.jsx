@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Menu, X, Plus, Search, Truck, Users, Building, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TripSheetForm from './TripsheetForm';
+import ManageDrivers from './ManageDrivers';
 
 // Mock data for demonstration
 const initialTrips = [
@@ -25,11 +26,13 @@ function AdminDashboard() {
 
   const vendors = [...new Set(trips.map(trip => trip.vendor))];
 
- const handleNewClick=()=>{
-console.log(" the new trip sheet has been clicked ");
-setCreateTrip(true)
 
- }
+  const handleNewClick = () => {
+    console.log("The new trip sheet has been clicked");
+    setCreateTrip((prev) => !prev); // Toggle the state
+    console.log(" this the value of it ",createtrip);
+    
+  };
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -177,20 +180,11 @@ setCreateTrip(true)
                   </div>
                 )}
               </div>
-            </div>):(<TripSheetForm/>)
+            </div>):(<TripSheetForm method={handleNewClick}/>)
           )}
 
           {activeTab === 'drivers' && (
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Manage Drivers</h2>
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  <Plus size={18} />
-                  Add Driver
-                </button>
-              </div>
-              {/* Add driver management UI here */}
-            </div>
+             <ManageDrivers />
           )}
 
           {activeTab === 'vendors' && (

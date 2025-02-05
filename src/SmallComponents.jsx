@@ -1,37 +1,34 @@
-export const InputFields = ({
-    label,
-    placeholder = "Enter value",
-    type = "text",
-    required = false,
-    id,
-    name,
-    value,
-    onChange,
-  }) => {
-    return (
-      <div className="space-y-2">
-        {/* Label for the input */}
-        <label
-          htmlFor={id}
-          className="block text-sm font-medium text-gray-700"
+export const InputFields = ({ id, label, placeholder, type, required, name, value, onChange, options }) => {
+  return (
+    <div className="flex flex-col">
+      <label htmlFor={id} className="font-semibold">{label}</label>
+      {type === "select" ? (
+        <select
+          id={id}
+          name={name}
+          required={required}
+          value={value}
+          onChange={onChange}
+          className="border p-2 rounded"
         >
-          {label} {required && "*"}
-        </label>
-  
-        {/* Input with icon */}
-        <div className="relative">
-        
-          <input
-            id={id}
-            name={name}
-            type={type}
-            {...(type !== "file" && { value })} // Exclude value for file inputs
-            onChange={onChange}
-            required={required}
-            className="pl-10 w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:ring-1 hover:ring-gray-400"
-            placeholder={placeholder}
-          />
-        </div>
-      </div>
-    );
-  };
+          {options.map((option, index) => (
+            <option key={index} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          id={id}
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          required={required}
+          value={value}
+          onChange={onChange}
+          className="border p-2 rounded"
+        />
+      )}
+    </div>
+  );
+};

@@ -1,66 +1,52 @@
-import { useEffect, useState } from 'react';
+import {  useEffect, useState } from 'react';
+
+import axios from 'axios';
 import { useLocation } from 'react-router-dom';
+import { axiosClient } from '../Api/API_Client';
 
 const DriverForm = () => {
-  const [formData, setFormData] = useState({
-    tripId: '',
-    driverName: '',
-    tripDate: '',
-    vehicleNumber: '',
-  });
-
+  const [tripDetails, setTripDetails] = useState(null);
   const location = useLocation();
-
+  
+  // Extract the tripId from the URL
+  const queryParams = new URLSearchParams(location.search);
+  const tripId = queryParams.get('formId');
+  
+  // Fetch the trip details based on the tripId
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const tripId = queryParams.get('tripId');
+    const fetchTripDetails = async () => {
+      if (tripId) {
+        try {
+          const response = await axiosClient.get(`/form/${tripId}`);
+          setTripDetails(response.data.data);
+        } catch (error) {
+          console.error('Error fetching trip details:', error);
+        }
+      }
+    };
 
-    if (tripId) {
-      fetch(`http://localhost:5000/api/get-trip/${tripId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            setFormData({
-              tripId: data.trip.tripId,
-              driverName: data.trip.driverName,
-              tripDate: data.trip.tripDate,
-              vehicleNumber: '',
-            });
-          } else {
-            alert("Trip details not found");
-          }
-        })
-        .catch(error => console.error("Error fetching trip details:", error));
-    }
-  }, [location]);
-
-  const handleSubmit = async () => {
-    const response = await fetch('http://localhost:5000/api/submit-trip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      alert("Trip details submitted successfully!");
-    }
-  };
+    fetchTripDetails();
+  }, [tripId]);
 
   return (
     <div>
       <h2>Driver Form</h2>
-      <form>
-        <input type="text" value={formData.driverName} readOnly />
-        <input type="date" value={formData.tripDate} readOnly />
-        <input
-          type="text"
-          placeholder="Enter Vehicle Number"
-          value={formData.vehicleNumber}
-          onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
-        />
-        <button type="button" onClick={handleSubmit}>Submit</button>
-      </form>
+      {tripDetails ? (
+        <div>
+          <h3>Trip Details:</h3>
+          <p><strong>Driver Name:</strong> {tripDetails.driver}</p>
+          <p><strong>Vehicle:</strong> {tripDetails.vehicle}</p>
+          <p><strong>Service Type:</strong> {tripDetails.serviceType}</p>
+          <p><strong>Passenger Name:</strong> {tripDetails.passengerName}</p>
+          <p><strong>Phone Number:</strong> {tripDetails.passengerPhoneNumber}</p>
+          <p><strong>Reporting Address:</strong> {tripDetails.reportingAddress}</p>
+          <p><strong>Drop Address:</strong> {tripDetails.dropAddress}</p>
+          <p><strong>AC Type:</strong> {tripDetails.acType}</p>
+          <p><strong>Reporting Time:</strong> {tripDetails.reportingTime}</p>
+        </div>
+      ) : (
+        <p>Loading trip details...</p>
+      )}
     </div>
   );
 };

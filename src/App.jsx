@@ -35,6 +35,7 @@ import DriverForm from './components/DriverForm';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import TripSheetForm from './components/TripsheetForm';
+import DriverView from './DriverView';
 const isAuthenticated = () => {
   return localStorage.getItem("adminToken") !== null; // Simulated authentication check
 };
@@ -52,7 +53,7 @@ function App() {
         <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
         <Route path="/create-trip" element={<ProtectedRoute element={<TripSheetForm/>} />} />
         {/* Public Driver Form (No Login Required) */}
-        <Route path="/driver-form" element={<DriverForm />} />
+        <Route path="/driver-form" element={<DriverView />} />
         
         {/* Default Route */}
         <Route path="/" element={<Navigate to="/admin-login" />} />
