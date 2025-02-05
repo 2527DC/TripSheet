@@ -3,43 +3,34 @@ name: Deploy React App to Hostinger
 on:
   push:
     branches:
-      - main  # Trigger on push to the 'main' branch (change if using another branch)
+      - main  # Change if needed
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code from the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Install dependencies and build the React app
       - name: Install Dependencies & Build
         run: |
           npm install
-          npm run build  # Generates production-ready files in the 'build/' folder
+          npm run build
 
-      # Step 3: Ensure the deployment folder exists on Hostinger
       - name: Ensure Deployment Folder Exists on Hostinger
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}  # SSH Host (IP or domain of Hostinger server)
-          username: ${{ secrets.SSH_USER }}  # SSH Username
-          key: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH Private Key (ensure it's stored as GitHub secret)
-          port: 65002  # Default SSH port (change if needed)
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 65002
           script: |
-            mkdir -p /home/u123262960/public_html/Tripsheetweb  # Make sure the folder exists on the server
+            mkdir -p /home/u123262960/public_html/Tripsheetweb
             exit
 
-      # Step 4: Upload React Build Files to Hostinger
       - name: Upload React Build Files to Hostinger
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-avz -e 'ssh -p 65002 -i ~/.ssh/hostinger_deploy_key'"  # Rsync arguments (sync and delete old files)
-          SOURCE: "build/"  # Local folder containing the production-ready files
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USER }}
-          TARGET: "/home/u123262960/public_html/Tripsheetweb"  # Target folder on Hostinger
-          EXCLUDE: "/node_modules/ /dist/ .git/ .github/"  # Exclude unnecessary files/folders from the upload
+        run: |
+          rsync -avz --exclude=node_modules --exclude=dist --exclude=.git --exclude=.github \
+          -e "ssh -p 65002 -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no" \
+          build/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u123262960/public_html/Tripsheetweb
