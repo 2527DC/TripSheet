@@ -1,0 +1,41 @@
+name: Deploy React App to Hostinger
+
+on:
+  push:
+    branches:
+      - main  # Change if using another branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies & Build
+        run: |
+          npm install
+          npm run build  # Generate production-ready files
+
+      - name: Ensure Deployment Folder Exists on Hostinger
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 65002
+          script: |
+            mkdir -p /home/u123262960/public_html/Tripsheetweb
+            exit
+      
+      - name: Upload React Build Files to Hostinger
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rltgoDzvO --delete"
+          SOURCE: "build/"   # The React build folder
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          TARGET: "/home/u123262960/public_html/Tripsheetweb"  # Correct deployment path
+          EXCLUDE: "/node_modules/ /dist/ .git/ .github/"
