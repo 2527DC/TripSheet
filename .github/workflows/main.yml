@@ -27,7 +27,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}  # SSH Host (IP or domain of Hostinger server)
           username: ${{ secrets.SSH_USER }}  # SSH Username
           key: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH Private Key (ensure it's stored as GitHub secret)
-          port: 22  # Default SSH port (change if needed)
+          port: 65002  # Default SSH port (change if needed)
           script: |
             mkdir -p /home/u123262960/public_html/Tripsheetweb  # Make sure the folder exists on the server
             exit
