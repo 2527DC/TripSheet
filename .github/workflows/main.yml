@@ -18,19 +18,19 @@ jobs:
           npm install
           npm run build
 
+      - name: Setup SSH Key and Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/hostinger_deploy_key
+          chmod 600 ~/.ssh/hostinger_deploy_key
+          ssh-keyscan -p 65002 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
       - name: Ensure Deployment Folder Exists on Hostinger
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 65002
-          script: |
-            mkdir -p /home/u123262960/public_html/Tripsheetweb
-            exit
+        run: |
+          ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /home/u123262960/public_html/Tripsheetweb"
 
       - name: Upload React Build Files to Hostinger
         run: |
           rsync -avz --exclude=node_modules --exclude=dist --exclude=.git --exclude=.github \
-          -e "ssh -p 65002 -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no" \
+          -e "ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002" \
           build/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u123262960/public_html/Tripsheetweb
