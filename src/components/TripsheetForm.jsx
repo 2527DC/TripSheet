@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { InputFields } from '../SmallComponents';
-import axios from 'axios';
-import { axiosClient } from '../Api/API_Client';
+import { axiosClient, LocalClient } from '../Api/API_Client';
 
 const TripSheetForm = ({method}) => {
   
 
   const [generatedLink, setGeneratedLink] = useState("");
- 
+ const [options,setOptions]=useState([{ value: "", label: "Select a Vendor" }])
   const [data, setFormData] = useState({
     driver: "",
     vehicle: "",
@@ -17,15 +16,36 @@ const TripSheetForm = ({method}) => {
     reportingAddress: "",
     dropAddress: "",
     acType:"",
-    reportingTime:""
+    reportingTime:"",
+    vehicleType:""
   });
   
+  const getVendors = async () => {
+    try {
+      const response = await LocalClient.get("getVendors");
 
+      if (response.status === 200 && response.data) {
+        // Transform response data into the correct format
+        const vendorOptions = response.data.map((vendor) => ({
+          value: vendor.vendorName,
+          label: vendor.vendorName,
+        }));
 
+        // Add default option at the top
+        setOptions([{ value: "", label: "Select a Vendor" }, ...vendorOptions]);
+      }
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+    }
+  };
+
+  useEffect(() => {
+    getVendors();
+  }, []);
   const generateLink = async () => {
     console.log(" this is the  request data ",data);
     try {
-      const res = await axiosClient.post("/generate-link", data);
+      const res = await LocalClient.post("/generate-link", data);
       const link = `${window.location.origin}/driver-form?formId=${res.data.data.formId}`;
       console.log(" this is the responce ",res);
      
@@ -38,7 +58,7 @@ const TripSheetForm = ({method}) => {
        setFormData({
         driver: "",
         vehicle: "",
-        serviceType: "", // Vendor selection
+        vendor: "", 
         passengerName: "",
         passengerPhoneNumber: "",
         reportingAddress: "",
@@ -59,22 +79,18 @@ const TripSheetForm = ({method}) => {
   };
   const bookingdetailsInput = [
     { id: "driver", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "driver" },
-    { id: "vehicle", label: "Vehicle", placeholder: "Vehicle", type: "text", required: true, name: "vehicle" },
+    { id: "vehicle", label: "Vehicle No", placeholder: "Vehicle No", type: "text", required: true, name: "vehicle" },
+    { id: "vehicleType", label: "Vehicle Type", placeholder: "vehicleType", type: "text", required: true, name: "vehicleType" },
+
     {
-      id: "serviceType",
+      id: "vendor",
       label: "Vendor",
       type: "select",
       required: true,
-      name: "serviceType",
-      options: [
-        { value: "", label: "Select a service" },
-        { value: "hotel", label: "Hotel Booking" },
-        { value: "flight", label: "Flight Booking" },
-        { value: "car", label: "Car Rental" },
-      ],
+      name: "vendor",
+      options: options, // Use the dynamically updated options
     },
     { id: "reportingTime", label: "Reporting Time", placeholder: "Reporting Time", type: "time", required: true, name: "reportingTime" },
-
   ];
 
   const passengerInput = [
@@ -90,12 +106,19 @@ const TripSheetForm = ({method}) => {
   const handleInputChange = (e) => {
     const { name, type, value, files } = e.target;
     
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: type === "file" ? (files && files[0]) :
-        ["openKm", "closeKm"].includes(name) ?
-          Number(value) || 0 : value,
-    }));
+    if (name === 'passengerPhoneNumber') {
+      // Only allow digits and limit to 10
+      const formattedValue = value.replace(/\D/g, '').slice(0, 10); // Remove non-digits and slice to 10 digits
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: formattedValue
+      }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: value
+      }));
+    }
   };
 
    // Function to copy the generated link to clipboard

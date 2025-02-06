@@ -1,28 +1,47 @@
-import { InputFields } from './SmallComponents';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import SignaturePad from 'react-signature-canvas';
-import { useAuth } from './store/ AuthProvider';
-import { axiosClient } from './Api/API_Client';
+import {  LocalClient } from './Api/API_Client'; 
 import { useLocation } from 'react-router-dom';
 
 const DriverView = () => { 
-    let [Driversignature, setDriverSignature] = useState(null);
-    let [Guestsignature, setGuestSignature] = useState(null);
-    const { logout } = useAuth();
     const [tripDetails, setTripDetails] = useState(null);
     const location = useLocation();
-    const [visible,setvisible]=useState(true)
+    const [visible,setvisible]=useState(false)
     // Extract the tripId from the URL
     const queryParams = new URLSearchParams(location.search);
     const tripId = queryParams.get('formId');
+ // Signature states and refs
+ const [showGuestModal, setShowGuestModal] = useState(false);
+ const [showDriverModal, setShowDriverModal] = useState(false);
+
+ const guestSignatureRef = useRef(null);
+ const driverSignatureRef = useRef(null);
+    // Signature handling functions
+    const handleSaveGuestSignature = () => {
+      if (!guestSignatureRef.current.isEmpty()) {
+          setGuestSignature(guestSignatureRef.current.toDataURL());
+      }
+      setShowGuestModal(false);
+  };
+
+  const handleSaveDriverSignature = () => {
+      if (!driverSignatureRef.current.isEmpty()) {
+          setDriverSignature(driverSignatureRef.current.toDataURL());
+      }
+      setShowDriverModal(false);
+  };
+
     useEffect(() => {
       const fetchTripDetails = async () => {
         if (tripId) {
           try {
-            const response = await axiosClient.get(`/form/${tripId}`);
+            const response = await LocalClient.get(`/form/${tripId}`);
+          
             if (response.status===200) {
-              console.log("");
+              setvisible(true)
+              setTripDetails(response.data.data)
               
+              console.log(" this is the data ", tripDetails);
             }
             setTripDetails(response.data.data);
           } catch (error) {
@@ -35,46 +54,20 @@ const DriverView = () => {
     }, [tripId]);
   
 
-    const bookingdetailsInput = [
-        { id: "M/s", label: "M/s", placeholder: "M/s", type: "text", required: true, name: "ms" },
-        { id: "Reporting", label: "Reporting", placeholder: "Reporting", type: "text", required: true, name: "reporting" },
-        { id: "bookedBy", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedBy" },
-    ];
-
-    const VehicalInput = [
-        { id: "vehicleType", label: "Vehicle Type", placeholder: "Vehicle Type", type: "text", required: true, name: "vehicleType" },
-        { id: "VehicleNo", label: "Vehicle NO", placeholder: "Vehicle NO", type: "text", required: true, name: "vehicleNo" },
-        { id: "driverName", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "driverName" }
-    ];
-
     const [data, setFormData] = useState({
-        vehicleType: "",
-        ms: "",
-        reporting: "",
-        bookedBy: "",
-        date: "",
-        vehicleNo: "",
-        driverName: "",
-        journeyDetails: "",
         openKm: "",
         openHr: "",
         closeKm: "",
         closeHr: "",
+       formId:tripId
     });
 
-    const clearGuestSignature = (e) => {
-        e.preventDefault();
-        if (Guestsignature) {
-            Guestsignature.clear();
-        }
-    };
+    const [driverSignature, setDriverSignature] = useState(null);
+    const [guestSignature, setGuestSignature] = useState(null);
+    
 
-    const clearDriverSignature = (e) => {
-        e.preventDefault();
-        if (Driversignature) {
-            Driversignature.clear();
-        }
-    };
+
+ 
 
     const handleInputChange = (e) => {
         const { name, type, value, files } = e.target;
@@ -89,68 +82,55 @@ const DriverView = () => {
 
     let totalKm = Number(data.openKm || 0) + Number(data.closeKm || 0);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const validateForm = () => {
+      const requiredFields = ['openKm', 'openHr', 'closeKm', 'closeHr'];
+      const missingFields = requiredFields.filter(field => !data[field]);
+      
+      if (missingFields.length > 0) {
+          alert("Please fill all required fields");
+          return false;
+      }
 
-        const driverSignatureData = Driversignature ? Driversignature.toDataURL() : null;
-        const guestSignatureData = Guestsignature ? Guestsignature.toDataURL() : null;
+      if (!driverSignature) {
+          alert("Driver signature is required");
+          return false;
+      }
 
-        const updatedFormData = {
-            ...data,
-            Driversignature: driverSignatureData,
-            Guestsignature: guestSignatureData,
-            totalKm: totalKm,
-            status: "pending",
-            totalHr: 2,
-        };
+      if (!guestSignature) {
+          alert("Guest signature is required");
+          return false;
+      }
 
-        try {
-            const response = await axiosClient.post("addtripsheet", updatedFormData);
-            
-            if (response.data.success) {
-                alert("Submitted successfully!"); // Show success message
-                console.log("Data uploaded successfully");
+      return true;
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-                // Clear form fields
-                setFormData({
-                    ms: "",
-                    reporting: "",
-                    bookedBy: "",
-                    date: "",
-                    vehicleType: "",
-                    vehicleNo: "",
-                    driverName: "",
-                    journeyDetails: "",
-                    openKm: "",
-                    openHr: "",
-                    closeKm: "",
-                    closeHr: "",
-                    totalKm: "",
-                    totalHr: "",
-                    status: "",
-                    Driversignature: null,
-                    Guestsignature: null,
-                });
-
-                // Clear signatures
-                if (Driversignature) {
-                    Driversignature.clear();
-                }
-                if (Guestsignature) {
-                    Guestsignature.clear();
-                }
-
-            } else {
-                alert("Submission failed! Please try again.");
-                console.log("Data didn't upload successfully");
-            }
-        } catch (error) {
-            alert("An error occurred while submitting.");
-            console.error("An error occurred:", error);
-        }
-
-        console.log("Form Data Submitted:", updatedFormData);
+    const formData = {
+        ...data,
+        Driversignature: driverSignature, // Already base64, no need for toDataURL()
+        Guestsignature: guestSignature,
+        totalKm: Number(data.openKm) + Number(data.closeKm),
     };
+
+    console.log("Data being sent:", formData);
+
+    try {
+        const response = await LocalClient.patch("addtripsheet", formData);
+        console.log("Server response:", response.data);
+
+        if (response.data.success) {
+            alert("Submitted successfully!");
+            setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" });
+            setGuestSignature(null);
+            setDriverSignature(null);
+        }
+    } catch (error) {
+        alert("Submission failed!");
+        console.error("Error:", error);
+    }
+};
 
     return<>
     {visible?( <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -165,71 +145,42 @@ const DriverView = () => {
             <p className="text-gray-600">City, State - PIN Code</p>
             <p className="text-gray-600">Phone: +91 XXXXXXXXXX | Email: info@mltcorp.com</p>
           </div>
-
-          <div className="ml-auto">
-            <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 md:px-4 md:py-2 rounded text-sm md:text-base">
-              Logout
-            </button>
-          </div>
         </header>
       </div>
 
+      <div>
+      <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+       <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Booking Details</h2>
+           <div className="space-y-4">
+              <strong>M/S: {"dhbjhdvjhdfvhfdfmbdfh"}</strong> <br />
+              <strong>Reporting:{tripDetails.reportingTime}</strong><br />
+              <strong>BookedBy: {"  reminder what to do "}</strong><br />
+
+              <strong>Driver Name : {tripDetails.drivername}</strong><br />
+              <strong>vehicleType: {tripDetails.vehicleType}</strong><br />
+              <strong>vehicleNo:{tripDetails.vehicleNo}</strong>   <br />
+             </div>
+            </div>
+        </div>
+        <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Passanger Details</h2>
+              <div className="space-y-4">
+             <strong>passenger name: {tripDetails.passengerName}</strong>    <br />
+              <strong>passenger PhNo: {tripDetails.passengerPh}</strong>         <br />
+              <strong>reporting address :{tripDetails.reportingAddress}</strong>   <br />
+              <strong>droping address :{tripDetails.dropAddress}</strong>   <br />
+             </div>
+               </div>
+         
+
         <form onSubmit={handleSubmit}>
           <div className="p-6">
-            {/* Booking Details Section */}
-            <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Booking Details</h2>
-              <div className="space-y-4">
-                {bookingdetailsInput.map((input,index) => (
-                  <InputFields
-                    key={index}
-                    id={input.id}
-                    label={input.label}
-                    placeholder={input.placeholder}
-                    type={input.type}
-                    required={input.required}
-                    name={input.name}
-                    value={data[input.name] || ""}
-                    onChange={handleInputChange}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Vehicle Details Section */}
-            <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Vehicle Details</h2>
-              <div className="space-y-4">
-                {VehicalInput.map((input, index) => (
-                  <InputFields
-                    key={index}
-                    id={input.id}
-                    label={input.label}
-                    placeholder={input.placeholder}
-                    type={input.type}
-                    required={input.required}
-                    name={input.name}
-                    value={data[input.name] || ""}
-                    onChange={handleInputChange}
-                  />
-                ))}
-              </div>
-            </div>
-
+            
             {/* Timing Details Section */}
             <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Timing Details</h2>
               <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-center gap-2">
-                  <label className="w-32 font-medium text-gray-700">Date:</label>
-                  <input
-                    name="date"
-                    type="date"
-                    className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={data.date || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
+            
 
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h3 className="text-lg font-medium mb-4">Opening</h3>
@@ -292,79 +243,130 @@ const DriverView = () => {
               </div>
             </div>
 
-            {/* Journey Details Section */}
-            <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Journey Details</h2>
-              <textarea
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                name="journeyDetails"
-                value={data.journeyDetails || ""}
-                onChange={handleInputChange}
-                rows="4"
-              ></textarea>
-            </div>
+      
+             {/* Signature Sections */}
+             <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+                        <h2 className="text-xl font-semibold mb-4">Signatures</h2>
 
-            {/* Important Notes Section */}
-            <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Important Notes</h2>
-              <ol className="list-decimal pl-6 space-y-2 text-gray-700">
-                <li>All trips must be authorized by the company.</li>
-                <li>Driver must maintain proper log of all stops.</li>
-                <li>Speed limits must be strictly followed.</li>
-                <li>No unauthorized passengers allowed.</li>
-                <li>Report any vehicle issues immediately.</li>
-              </ol>
-            </div>
+                        <div className="space-y-4">
+                            <div className="border p-4 rounded-lg">
+                                <h3 className="font-medium mb-2">Guest Signature</h3>
+                                {guestSignature ? (
+                                    <div className="mb-2">
+                                        <img src={guestSignature} alt="Guest Signature" className="h-20 border" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowGuestModal(true)}
+                                            className="ml-2 text-blue-600 hover:text-blue-800"
+                                        >
+                                            Re-sign
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowGuestModal(true)}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    >
+                                        Add Guest Signature
+                                    </button>
+                                )}
+                            </div>
 
-            {/* Signature Section  for guest */}
-            <div className="bg-white rounded-lg border border-gray-500 p-4  ">
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Signatures</h2>
-              <div className="mt-4">
-                <h3 className="text-lg font-medium mb-2">Guest Signature</h3>
-                <div className="border border-gray-300 rounded-lg overflow-hidden  bg-greay-600 ">
-                  <SignaturePad
-                    ref={(ref) => setDriverSignature(ref)}
-                    canvasProps={{
-                      className: 'signature-canvas bg-red-100 w-full',
-                      style: { height: '250px', 
-                    
-                      },
-                    }}
-                  />
-                </div>
-                <button
-                  onClick={ clearGuestSignature}
-                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Clear Signature
-                </button>
-              </div>
-            </div>
+                            <div className="border p-4 rounded-lg">
+                                <h3 className="font-medium mb-2">Driver Signature</h3>
+                                {driverSignature ? (
+                                    <div className="mb-2">
+                                        <img src={driverSignature} alt="Driver Signature" className="h-20 border" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDriverModal(true)}
+                                            className="ml-2 text-blue-600 hover:text-blue-800"
+                                        >
+                                            Re-sign
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDriverModal(true)}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    >
+                                        Add Driver Signature
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-              {/* Signature Section for driver  */}
-            <div className="bg-white rounded-lg border border-gray-500 p-4 mt-2 ">
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Signatures</h2>
-              <div className="mt-4">
-                <h3 className="text-lg font-medium mb-2">Driver Signature</h3>
-                <div className="border border-gray-300 rounded-lg overflow-hidden  bg-greay-600 ">
-                  <SignaturePad
-                    ref={(ref) => setGuestSignature(ref)}
-                    canvasProps={{
-                      className: 'signature-canvas bg-red-100 w-full',
-                      style: { height: '250px', 
-                    
-                      },
-                    }}
-                  />
-                </div>
-                <button
-                  onClick={clearDriverSignature}
-                  className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Clear Signature
-                </button>
-              </div>
-            </div>
+                    {/* Signature Modals */}
+                    {showGuestModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <div className="bg-white p-6 rounded-lg w-11/12 max-w-2xl">
+                                <h2 className="text-xl font-semibold mb-4">Guest Signature</h2>
+                                <div className="border border-gray-300 rounded-lg bg-gray-100 mb-4">
+                                    <SignaturePad
+                                        ref={guestSignatureRef}
+                                        canvasProps={{ className: 'w-full', style: { height: '200px' } }}
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => guestSignatureRef.current.clear()}
+                                        className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        onClick={handleSaveGuestSignature}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    >
+                                        Save Signature
+                                    </button>
+                                    <button
+                                        onClick={() => setShowGuestModal(false)}
+                                        className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Back to Form
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showDriverModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <div className="bg-white p-6 rounded-lg w-11/12 max-w-2xl">
+                                <h2 className="text-xl font-semibold mb-4">Driver Signature</h2>
+                                <div className="border border-gray-300 rounded-lg bg-gray-100 mb-4">
+                                    <SignaturePad
+                                        ref={driverSignatureRef}
+                                        canvasProps={{ className: 'w-full', style: { height: '200px' } }}
+                                    />
+                                </div>  
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => driverSignatureRef.current.clear()}
+                                        className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        onClick={handleSaveDriverSignature}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                    >
+                                        Save Signature
+                                    </button>
+                                    <button
+                                        onClick={() => setShowDriverModal(false)}
+                                        className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                                    >
+                                        Back to Form
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
             {/* Submit Button */}
             <div className="p-2 flex justify-center items-center">
@@ -379,7 +381,8 @@ const DriverView = () => {
           </div>
         </form>
       </div>
-    </div>):( <p>Loading trip details...</p>)}</>
+    </div>
+    ):( <p>Loading trip details...</p>)}</>
 }
 
 

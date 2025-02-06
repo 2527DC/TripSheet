@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import { InputFields } from '../SmallComponents';
 import { LocalClient } from '../Api/API_Client';
 
-const ManageDrivers = () => {
+const ManageVendor = () => {
   const [create, setCreate] = useState(false);
   const [data, setFormData] = useState({
-    driverName: "",
-    vehicleNo: "",
-    vehicleType: "",
-    phNumber: "",
+    vendorName: "",
+    phoneNo: "",  // Match Prisma schema
+    city: ""
   });
 
   const handleAddDriver = () => {
@@ -17,15 +16,16 @@ const ManageDrivers = () => {
   };
 
   const DriverdetailsInput = [
-    { id: "driver", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "driverName" },
-    { id: "vehicleNo", label: "Vehicle No", placeholder: "Vehicle No", type: "text", required: true, name: "vehicleNo" },
-    { id: "vehicletype", label: "Vehicle Type", placeholder: "Vehicle Type", type: "text", required: true, name: "vehicleType" },
-    { id: "phNumber", label: "Phone No", placeholder: "Phone No", type: "number", required: true, name: "phNumber" },
+    { id: "vendorName", label: "Vendor Name", placeholder: "Vendor Name", type: "text", required: true, name: "vendorName" },
+    { id: "phoneNo", label: "Phone No", placeholder: "Phone No", type: "text", required: true, name: "phoneNo", len: 10 },
+    { id: "city", label: "City", placeholder: "City", type: "text", required: true, name: "city" },
   ];
 
   const handleInputChange = (e) => {
     const { name, type, value } = e.target;
-    if (name === 'phNumber') {
+
+    // If phone number field, allow only digits and limit length to 10
+    if (name === 'phoneNo') {
       // Only allow digits and limit to 10
       const formattedValue = value.replace(/\D/g, '').slice(0, 10); // Remove non-digits and slice to 10 digits
       setFormData((prevState) => ({
@@ -41,49 +41,34 @@ const ManageDrivers = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page
+    e.preventDefault();
 
     try {
-      console.log(" thsi sis the request data ",data);
-      
-      const response = await LocalClient.post("createDriver", data);
-      console.log(" this is the responce ",response);
+      console.log("This is the request data:", data);
 
-      if (response.status ===201) {
+      const response = await LocalClient.post("createVendor", data);
+      console.log("This is the response:", response);
 
-        console.log(" statement inside the ");
-        
+      if (response.status === 201) {
         alert(response.data.message); // Success message
         setCreate(false); // Close form after submission
         setFormData({
-          driverName: "",
-          vehicleNo: "",
-          vehicleType: "",
-          phNumber: "",
+          vendorName: "",
+          phoneNo: "",
+          city: "",
         }); // Reset the form data
-      }
-       else {
+      } else {
         alert(response.data.message); // Show error message from response
       }
     } catch (error) {
       if (error.response) {
-        // Server responded with a status code outside of the 2xx range
-        if (error.response.status === 404) {
-          alert('User not found. Please check your credentials.');
-        } else if (error.response.status === 401) {
-          alert('Incorrect password. Please try again.');
-        } else {
-          alert('Login failed: ' + error.response.data.message);
-        }
+        alert(`Error: ${error.response.data.message}`);
       } else if (error.request) {
-        // No response was received from the server
         alert('No response from the server. Please check your network connection.');
       } else {
-        // Something else caused the error
-        alert('An error occurred while logging in.');
+        alert('An error occurred while processing your request.');
       }
-      console.log(" this is the error " ,error);
-      
+      console.log("This is the error:", error);
     }
   };
 
@@ -91,13 +76,13 @@ const ManageDrivers = () => {
     <div>
       <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Manage Drivers</h2>
+          <h2 className="text-lg font-semibold">Manage Vendors</h2>
           <button
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             onClick={handleAddDriver}
           >
             <Plus size={18} />
-            Add Driver
+            Add Vendor
           </button>
         </div>
       </div>
@@ -105,7 +90,7 @@ const ManageDrivers = () => {
       {/* Render the form when create is true */}
       {create && (
         <div className="mt-4 bg-gray-100 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-4">Add New Driver</h3>
+          <h3 className="text-xl font-semibold mb-4">Add New Vendor</h3>
           <form onSubmit={handleSubmit}>
             <div className="flex grid-cols-3 gap-4">
               {DriverdetailsInput.map((input, index) => (
@@ -140,4 +125,4 @@ const ManageDrivers = () => {
   );
 };
 
-export default ManageDrivers;
+export default ManageVendor;

@@ -80,6 +80,8 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { LocalClient } from '../Api/API_Client';
 
 const AuthContext = createContext();
 
@@ -89,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);  // ✅ Add loading state
-
+ 
   // Check if user is authenticated on app load
   useEffect(() => {
     const checkAuth = () => {
@@ -112,9 +114,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log("login method got invoked");
-
+      
       // Make the login request using Axios
-      const response = await axios.post("http://192.168.0.159:3000/api/login", { email, password });
+      const response = await LocalClient.post("login", { email, password });
 
       console.log("this is the req ", { email, password });
       console.log("this is the response ", response.data);
@@ -125,6 +127,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setUserRole(role);
         alert(message);  // Show success message
+          
       } else {
         alert('Login failed: ' + response.data.message); // Show failure message
       }
@@ -160,7 +163,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, loading, setIsAuthenticated, setUserRole, logout, login }}>
+    <AuthContext.Provider value={{ isAuthenticated, userRole, loading, setIsAuthenticated, setUserRole, logout,login }}>
       {children}
     </AuthContext.Provider>
   );    

@@ -1,256 +1,204 @@
-// import { useState } from 'react';
-// import SignaturePad from 'react-signature-canvas';
 
-// function App() {
-//   const [signature, setSignature] = useState(null);
-//   const [tripData, setTripData] = useState({
-//     bookingDetails: {
-//       ms: '',
-//       reportingTo: '',
-//       bookedBy: ''
-//     },
-//     vehicleDetails: {
-//       logSheetNo: '',
-//       vehicleType: '',
-//       vehicleNo: '',
-//       driverName: ''
-//     },
-//     timings: {
-//       date: '',
-//       openingKm: '',
-//       openingHrs: '',
-//       openingAmPm: 'AM',
-//       closingKm: '',
-//       closingHrs: '',
-//       closingAmPm: 'AM'
-//     },
-//     journeyDetails: ''
-//   });
+// import React, { useState } from 'react';
+// import { Menu, X, Plus, Search, Truck, Users, Building, ChevronRight, LogOutIcon, LogOut } from 'lucide-react';
+// import { useNavigate } from 'react-router-dom';
+// import TripSheetForm from './TripsheetForm';
+// import ManageDrivers from './ManageDrivers';
+// import { useAuth } from '../store/ AuthProvider';
+// import ManageVendor from './ManageVendor';
 
-//   const handleInputChange = (section, field, value) => {
-//     setTripData(prev => ({
-//       ...prev,
-//       [section]: {
-//         ...prev[section],
-//         [field]: value
-//       }
-//     }));
+// // Mock data for demonstration
+// const initialTrips = [
+//   { id: 1, date: '2024-03-15', driver: 'John Doe', vendor: 'Express Logistics', destination: 'New York', status: 'In Progress' },
+//   { id: 2, date: '2024-03-14', driver: 'Jane Smith', vendor: 'Fast Transit', destination: 'Chicago', status: 'Completed' },
+//   // Add more mock data as needed
+// ];
+
+// function AdminDashboard() {
+//   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+//   const [trips] = useState(initialTrips);
+//   const [selectedTrip, setSelectedTrip] = useState(null);
+//   const [activeTab, setActiveTab] = useState('trips'); // trips, drivers, vendors
+//   const [selectedVendor, setSelectedVendor] = useState('all');
+//   const [createtrip,setCreateTrip] = useState(false);
+  
+//   const filteredTrips = selectedVendor === 'all' 
+//     ? trips 
+//     : trips.filter(trip => trip.vendor === selectedVendor);
+
+//   const vendors = [...new Set(trips.map(trip => trip.vendor))];
+
+//  const {logout}=useAuth()
+
+//   const handleNewClick = () => {
+//     console.log("The new trip sheet has been clicked");
+//     setCreateTrip((prev) => !prev); // Toggle the state
+//     console.log(" this the value of it ",createtrip);
+    
 //   };
-
-//   const clearSignature = () => {
-//     if (signature) {
-//       signature.clear();
-//     }
-//   };
-
 //   return (
-//     <div className="min-h-screen bg-gray-50 py-8 px-4">
-//       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-//         <header className="flex flex-col md:flex-row items-center p-6 border-b border-gray-200">
-//           <img src="/MLt.jpeg" alt="MLT Logo" className="w-24 h-24 mb-4 md:mb-0 md:mr-6" />
-//           <div className="text-center md:text-left">
-//             <h1 className="text-2xl font-bold text-gray-800">MLT Corporate Solutions Private Limited</h1>
-//             <p className="text-gray-600">123 Business Park, Main Street</p>
-//             <p className="text-gray-600">City, State - PIN Code</p>
-//             <p className="text-gray-600">Phone: +91 XXXXXXXXXX | Email: info@mltcorp.com</p>
-//           </div>
-//         </header>
-
-//         <div className="p-6">
-//           <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-//             <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Booking Details</h2>
-//             <div className="space-y-4">
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">M/s:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.bookingDetails.ms}
-//                   onChange={(e) => handleInputChange('bookingDetails', 'ms', e.target.value)}
-//                 />
-//               </div>
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Reporting To:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.bookingDetails.reportingTo}
-//                   onChange={(e) => handleInputChange('bookingDetails', 'reportingTo', e.target.value)}
-//                 />
-//               </div>  
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Booked By:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.bookingDetails.bookedBy}
-//                   onChange={(e) => handleInputChange('bookingDetails', 'bookedBy', e.target.value)}
-//                 />
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-//             <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Vehicle Details</h2>
-//             <div className="space-y-4">
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Log Sheet No:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.vehicleDetails.logSheetNo}
-//                   onChange={(e) => handleInputChange('vehicleDetails', 'logSheetNo', e.target.value)}
-//                 />
-//               </div>
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Vehicle Type:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.vehicleDetails.vehicleType}
-//                   onChange={(e) => handleInputChange('vehicleDetails', 'vehicleType', e.target.value)}
-//                 />
-//               </div>
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Vehicle No:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.vehicleDetails.vehicleNo}
-//                   onChange={(e) => handleInputChange('vehicleDetails', 'vehicleNo', e.target.value)}
-//                 />
-//               </div>
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Driver Name:</label>
-//                 <input
-//                   type="text"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.vehicleDetails.driverName}
-//                   onChange={(e) => handleInputChange('vehicleDetails', 'driverName', e.target.value)}
-//                 />
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-//             <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Timing Details</h2>
-//             <div className="space-y-6">
-//               <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                 <label className="w-32 font-medium text-gray-700">Date:</label>
-//                 <input
-//                   type="date"
-//                   className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                   value={tripData.timings.date}
-//                   onChange={(e) => handleInputChange('timings', 'date', e.target.value)}
-//                 />
-//               </div>
-
-//               <div className="bg-gray-50 rounded-lg p-4">
-//                 <h3 className="text-lg font-medium mb-4">Opening</h3>
-//                 <div className="space-y-4">
-//                   <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                     <label className="w-32 font-medium text-gray-700">KM:</label>
-//                     <input
-//                       type="number"
-//                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                       value={tripData.timings.openingKm}
-//                       onChange={(e) => handleInputChange('timings', 'openingKm', e.target.value)}
-//                     />
-//                   </div>
-//                   <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                     <label className="w-32 font-medium text-gray-700">Hours:</label>
-//                     <input
-//                       type="time"
-//                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                       value={tripData.timings.openingHrs}
-//                       onChange={(e) => handleInputChange('timings', 'openingHrs', e.target.value)}
-//                     />
-//                   </div>
-                
-//                 </div>
-//               </div>
-
-//               <div className="bg-gray-50 rounded-lg p-4">
-//                 <h3 className="text-lg font-medium mb-4">Closing</h3>
-//                 <div className="space-y-4">
-//                   <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                     <label className="w-32 font-medium text-gray-700">KM:</label>
-//                     <input
-//                       type="number"
-//                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                       value={tripData.timings.closingKm}
-//                       onChange={(e) => handleInputChange('timings', 'closingKm', e.target.value)}
-//                     />
-//                   </div>
-//                   <div className="flex flex-col md:flex-row md:items-center gap-2">
-//                     <label className="w-32 font-medium text-gray-700">Hours:</label>
-//                     <input
-//                       type="time"
-//                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                       value={tripData.timings.closingHrs}
-//                       onChange={(e) => handleInputChange('timings', 'closingHrs', e.target.value)}
-//                     />
-//                   </div>
-                
-//                 </div>
-//               </div>
-
-//               <div className="bg-blue-50 rounded-lg p-4">
-//                 <h3 className="text-lg font-medium mb-2">Totals</h3>
-//                 <p className="text-gray-700">Total KM: {tripData.timings.closingKm - tripData.timings.openingKm || 0} KM</p>
-//                 <p className="text-gray-700">Total Hours: Calculated based on time difference</p>
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-//             <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Journey Details</h2>
-//             <textarea
-//               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-//               value={tripData.journeyDetails}
-//               onChange={(e) => handleInputChange('journeyDetails', '', e.target.value)}
-//               rows="4"
-//             ></textarea>
-//           </div>
-
-//           <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
-//             <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Important Notes</h2>
-//             <ol className="list-decimal pl-6 space-y-2 text-gray-700">
-//               <li>All trips must be authorized by the company.</li>
-//               <li>Driver must maintain proper log of all stops.</li>
-//               <li>Speed limits must be strictly followed.</li>
-//               <li>No unauthorized passengers allowed.</li>
-//               <li>Report any vehicle issues immediately.</li>
-//             </ol>
-//           </div>
-
-//           <div className="bg-white rounded-lg border border-gray-200 p-4 ">
-//             <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Signatures</h2>
-//             <div className="mt-4">
-//               <h3 className="text-lg font-medium mb-2">Guest Signature</h3>
-//               <div className="border border-gray-300 rounded-lg overflow-hidden">
-//           <SignaturePad
-//             ref={(ref) => setSignature(ref)}
-//             canvasProps={{
-//           className: 'signature-canvas bg-white',
-//           style: {
-//             height: '250px', // Default height
-//           },
-//         }}
-//       />
-//     </div>
-//               <button
-//                 onClick={clearSignature}
-//                 className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-//               >
-//                 Clear Signature
-//               </button>
-//             </div>
+//     <div className="min-h-screen bg-gray-100">
+//       {/* Header */}
+//       <header className="bg-white shadow-sm">
+//         <div className="flex items-center justify-between px-4 py-3">
+//           <div className="flex items-center gap-3">
+//             <button
+//               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+//               className="p-2 rounded-lg hover:bg-gray-100 lg:hidden"
+//             >
+//               {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+//             </button>
+//             <h1 className="text-xl font-bold">Trip Management Dashboard</h1>
 //           </div>
 //         </div>
+//       </header>
+
+//       <div className="flex">
+//         {/* Sidebar */}
+//         <aside className={`${
+//           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+//         } fixed lg:static lg:translate-x-0 z-30 w-64 h-[calc(100vh-64px)] bg-white shadow-lg transition-transform duration-300 ease-in-out`}>
+//           <nav className="p-4 space-y-2">
+//             <button
+//               onClick={() => setActiveTab('trips')}
+//               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
+//                 activeTab === 'trips' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+//               }`}
+//             >
+//               <Truck size={20} />
+//               Trip Sheets
+//             </button>
+//             <button
+//               onClick={() => setActiveTab('drivers')}
+//               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
+//                 activeTab === 'drivers' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+//               }`}
+//             >
+//               <Users size={20} />
+//               Drivers
+//             </button>
+//             <button
+//               onClick={() => setActiveTab('vendors')}
+//               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
+//                 activeTab === 'vendors' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+//               }`}
+//             >
+//               <Building size={20} />
+//               Vendors
+//             </button>
+//             <button
+//               onClick={logout}
+//               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
+//                 activeTab === 'logout' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+//               }`}
+//             >
+//               <LogOut size={20} />
+//              Logout
+//             </button>
+//           </nav>
+//         </aside>
+
+//         {/* Main Content */}    
+//         <main className="flex-1 p-4 lg:p-6">
+//           {activeTab === 'trips' && (
+//             !createtrip?(  <div className="grid lg:grid-cols-2 gap-6">
+//               {/* Trip List */}
+//               <div className="bg-white rounded-lg shadow-sm p-4">
+//                 <div className="flex items-center justify-between mb-4">
+//                   <h2 className="text-lg font-semibold">Trip Sheets</h2>
+//                   <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onClick={handleNewClick}>
+//                     <Plus size={18} />
+//                     New Trip
+//                   </button>
+//                 </div>
+
+//                 {/* Filter */}
+//                 <div className="mb-4">
+//                   <select
+//                     value={selectedVendor}
+//                     onChange={(e) => setSelectedVendor(e.target.value)}
+//                     className="w-full p-2 border rounded-lg"
+//                   >
+//                     <option value="all">All Vendors</option>
+//                     {vendors.map(vendor => (
+//                       <option key={vendor} value={vendor}>{vendor}</option>
+//                     ))}
+//                   </select>
+//                 </div>
+
+              
+
+//                 {/* Trip List */}
+//                 <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+//                   {filteredTrips.map(trip => (
+//                     <div
+//                       key={trip.id}
+//                       onClick={() => setSelectedTrip(trip)}
+//                       className={`p-3 rounded-lg cursor-pointer flex items-center justify-between ${
+//                         selectedTrip?.id === trip.id
+//                           ? 'bg-blue-50 border-blue-200'
+//                           : 'hover:bg-gray-50 border-gray-100'
+//                       } border`}
+//                     >
+//                       <div>
+//                         <p className="font-medium">{trip.destination}</p>
+//                         <p className="text-sm text-gray-500">{trip.date}</p>
+//                       </div>
+//                       <ChevronRight size={20} className="text-gray-400" />
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+
+//               {/* Trip Details */}
+//               <div className="bg-white rounded-lg shadow-sm p-4">
+//                 {selectedTrip ? (
+//                   <div>
+//                     <h2 className="text-lg font-semibold mb-4">Trip Details</h2>
+//                     <div className="space-y-4">
+//                       <div>
+//                         <label className="text-sm text-gray-500">Destination</label>
+//                         <p className="font-medium">{selectedTrip.destination}</p>
+//                       </div>
+//                       <div>
+//                         <label className="text-sm text-gray-500">Date</label>
+//                         <p className="font-medium">{selectedTrip.date}</p>
+//                       </div>
+//                       <div>
+//                         <label className="text-sm text-gray-500">Driver</label>
+//                         <p className="font-medium">{selectedTrip.driver}</p>
+//                       </div>
+//                       <div>
+//                         <label className="text-sm text-gray-500">Vendor</label>
+//                         <p className="font-medium">{selectedTrip.vendor}</p>
+//                       </div>
+//                       <div>
+//                         <label className="text-sm text-gray-500">Status</label>
+//                         <p className="font-medium">{selectedTrip.status}</p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ) : (
+//                   <div className="h-full flex items-center justify-center text-gray-500">
+//                     Select a trip to view details
+//                   </div>
+//                 )}
+//               </div>
+//             </div>):(<TripSheetForm method={handleNewClick}/>)
+//           )}
+
+//           {activeTab === 'drivers' && (
+//              <ManageDrivers />
+//           )}
+
+//       {activeTab === 'vendors' && (
+//              <ManageVendor />
+//           )}
+         
+//         </main>
 //       </div>
 //     </div>
 //   );
 // }
 
-// export default App;
+// export default AdminDashboard

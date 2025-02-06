@@ -36,21 +36,30 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import TripSheetForm from './components/TripsheetForm';
 import DriverView from './DriverView';
+import { Login } from './Loginpage';
+import { useAuth } from './store/ AuthProvider';
+import AdminView from './AdminView';
+
+
 const isAuthenticated = () => {
   return localStorage.getItem("adminToken") !== null; // Simulated authentication check
 };
 
 const ProtectedRoute = ({ element }) => {
-  return isAuthenticated() ? element : <Navigate to="/admin-login" />;
+  const { isAuthenticated} = useAuth();
+
+  return isAuthenticated ? element : <Navigate to="/admin-login" />;
 };
 
 function App() {
+
   return (
     <Router>
       <Routes>
         {/* Admin Routes (Protected) */}
-        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin-login" element={<Login />} />
         <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
+       
         <Route path="/create-trip" element={<ProtectedRoute element={<TripSheetForm/>} />} />
         {/* Public Driver Form (No Login Required) */}
         <Route path="/driver-form" element={<DriverView />} />
