@@ -1,9 +1,12 @@
 name: Deploy React App to Hostinger
 
 on:
-  push:
+  pull_request:
     branches:
-      - main  # Trigger deployment on pushes to the main branch
+      - main
+    types:
+      - closed  # Trigger only when a PR is closed
+
 
 jobs:
   deploy:
