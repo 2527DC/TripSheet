@@ -36,6 +36,8 @@ import TripSheetForm from './components/TripsheetForm';
 import DriverView from './DriverView';
 import { Login } from './Loginpage';
 import { useAuth } from './store/ AuthProvider';
+import DownloadPDF from './components/DownloadPdf';
+import TripSheetPDF from './components/DownloadPdf';
 
 
 const isAuthenticated = () => {
@@ -60,7 +62,7 @@ function App() {
         <Route path="/create-trip" element={<ProtectedRoute element={<TripSheetForm/>} />} />
         {/* Public Driver Form (No Login Required) */}
         <Route path="/driver-form" element={<DriverView />} />
-        
+        <Route path="/pdf" element={<TripSheetPDF/>} />
         {/* Default Route */}
         <Route path="/" element={<Navigate to="/admin-login" />} />
       </Routes>
