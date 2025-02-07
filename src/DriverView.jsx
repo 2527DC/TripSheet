@@ -59,7 +59,10 @@ const DriverView = () => {
         openHr: "",
         closeKm: "",
         closeHr: "",
-       formId:tripId
+       formId:tripId,
+       
+       toolCharges:null,
+       parkingCharges:null
     });
 
     const [driverSignature, setDriverSignature] = useState(null);
@@ -75,7 +78,7 @@ const DriverView = () => {
         setFormData((prevState) => ({
             ...prevState,
             [name]: type === "file" ? (files && files[0]) : 
-                    ["openKm", "closeKm"].includes(name) ? 
+                    ["openKm", "closeKm","toolCharges","parkingCharges"].includes(name) ? 
                     Number(value) || 0 : value, // Convert specific fields to numbers
         }));
     };
@@ -103,6 +106,8 @@ const DriverView = () => {
 
       return true;
   };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -122,7 +127,8 @@ const DriverView = () => {
 
         if (response.data.success) {
             alert("Submitted successfully!");
-            setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" });
+            setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" , toolCharges:"",
+              parkingCharges:""});
             setGuestSignature(null);
             setDriverSignature(null);
         }
@@ -235,6 +241,29 @@ const DriverView = () => {
                 </div>
               </div>
 
+              <div className='bg-gray-50 rounded-lg p-4'>
+              <div className="flex flex-col md:flex-row md:items-center gap-2">
+                      <label className="w-32 font-medium text-gray-700">Tool Charges:</label>
+                      <input
+                        name="toolCharges"
+                        type="number"
+                        className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={data.toolCharges|| ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 mt-2">
+                    <label className="w-32 font-medium text-gray-700">Parking Charges:</label>
+                    <input
+                      name="parkingCharges"
+                      type="number"
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={data.parkingCharges || ""}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+              </div>
+
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium mb-2">Totals</h3>
                 <p className="text-gray-700"> Total KM: {Number(data.openKm || 0) + Number(data.closeKm || 0)} KM</p>
@@ -341,6 +370,7 @@ const DriverView = () => {
                                 <div className="border border-gray-300 rounded-lg bg-gray-100 mb-4">
                                     <SignaturePad
                                         ref={driverSignatureRef}
+                                        
                                         canvasProps={{ className: 'w-full', style: { height: '200px' } }}
                                     />
                                 </div>  
