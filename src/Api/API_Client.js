@@ -2,7 +2,7 @@ import axios from "axios";
 // import Cookies from "js-cookie";
 
 export const LocalClient = axios.create({
-  baseURL: "http://localhost:3000/api/",
+  baseURL: "https://api.mltcorporate.com/api/",
 });
 
 

@@ -22,7 +22,7 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
 
     const [driverSignature, setDriverSignature] = useState('');
     const [guestSignature, setGuestSignature] = useState('');
-    const imageUrl = "http://localhost:3000/api/get-signature/";
+    const imageUrl = "https://api.mltcorporate.com/api/get-signature/";
 
     const convertImageToBase64 = async (url) => {
         try {
@@ -91,20 +91,23 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
                     <table className="table border-collapse w-full" style={{ border: "1px solid black",  }}>
                         <thead>
                             <tr>
-                                <th style={{ border: "1px solid black", padding: "5px" }}>Log Sheet No.</th>
-                                <th style={{ border: "1px solid black", padding: "5px" }}>Vehicle Type</th>
+                                <th style={{ border: "1px solid black", padding: "2px" }}>Log Sheet No.</th>
+                                <th style={{ border: "1px solid black", padding: "1px" }}>Vehicle Type</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Vehicle No.</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Driver's Name</th>
-                                <th style={{ border: "1px solid black", padding: "5px" }}>Particulars</th>
+                                <th style={{ border: "1px solid black", padding: "2px" }}>Parking Charges</th>
+                                <th style={{ border: "1px solid black", padding: "2px" }}>Tool Charges</th>
+                                
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.id}</td>
+                                <td  className="items-center"style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.id}</td>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.vehicleType}</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.vehicleNo}</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.drivername}</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.vehicleType}</td>
+                                <td  className="px-4" style={{ border: "1px solid black", padding: "5px" }}>KA-05-MG-1234</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>monahan dash vijaya </td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.toolCharges===null?"0":selectedTrip.toolCharges} Rs</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.parkingCharges===null?"0":selectedTrip.parkingCharges} Rs</td>
                             </tr>
                         </tbody>
                     </table>
@@ -118,54 +121,83 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Closing Kms</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Closing Hrs</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Total Kms</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Total Hrs</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Guest Signature</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{formattedDate}</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>Value 1</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>Value 1</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>Value 1</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>Value 1</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>Value 1</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>Value 1</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.openKm}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.openHr}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.closeKm}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.closeHr}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.totalKm}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{"should add"}</td>
+                                <td style={{ border: "1px solid black", padding: "1px" }}> 
+                                    <img src={guestSignature} id="guest-signature" alt="Guest Signature" className="w-full" /></td>
+                               
                             </tr>
-                            <tr>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>&nbsp;</td>
-                            </tr>
+                           
                         </tbody>
+                        
+                                        <tbody>
+                    <tr>
+                        {/* Note List - spans 6 columns */}
+                        <td 
+                            colSpan={6}
+                            style={{ 
+                                border: "1px solid black", 
+                                padding: "10px", 
+                                verticalAlign: "top",
+                                width: "70%"
+                            }}
+                        >
+                            <h1 className="font-bold mb-2">Note :</h1>
+                            <ol style={{ margin: 0, paddingLeft: "20px" }}>
+                                <li>Driver should follow all traffic rules and regulations</li>
+                                <li>Night charges applicable between 10PM to 6AM</li>
+                                <li>Toll charges and parking charges will be borne by client</li>
+                                <li>Minimum billing of 8 hours/80 kms per day</li>
+                                <li>Damage charges will be applicable for any interior stains or burns</li>
+                            </ol>
+                        </td>
+
+                        {/* Guest Signature - spans 2 columns */}
+                        <td 
+                            colSpan={2}
+                            style={{ 
+                                border: "1px solid black", 
+                                padding: "10px", 
+                                textAlign: "center",
+                                width: "30%"
+                            }}
+                        >
+                            <div className="h-32 flex items-center justify-center">
+                                <img 
+                                    src={driverSignature} 
+                                    alt="Driver Signature" 
+                                    style={{ 
+                                        maxWidth: "100%", 
+                                        maxHeight: "100%",
+                                        objectFit: "contain"
+                                    }} 
+                                />
+                            </div>
+                            <p className="mt-1 text-sm font-semibold">Driver Signature</p>
+                        </td>
+                    </tr>
+                </tbody>
+                     
                     </table>
 
-                    <div className=" flex  grid-cols-1 justify-between mt-3 pt-2">
-
-                    <div className=" ">
-                    <div className="">
-                    <img src={driverSignature} id="driver-signature" alt="Driver Signature"  className="w-full" />
-
-                            </div>
-                            <h1 className="mt-2 ">Driver Signature</h1>
-                    </div>
-                    <div className="">
-                    <div className="">
-                    <img src={guestSignature} id="guest-signature" alt="Guest Signature" className="w-full" />
-
-                            </div>
-                        <h1>Guest Signature</h1>
-                    </div>
-                    </div>
+                
                     
                 </div>
 
                
             </div>
-            {/* <button onClick={downloadPDF} className="btn btn-primary mt-3">Download PDF</button> */}
+           
         </div>
     );
 };
