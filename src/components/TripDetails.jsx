@@ -15,6 +15,13 @@ const TripDetails = ({ selectedTrip, goBack }) => {
   const guestSignatureRef = useRef();
 
 
+
+
+  const date = new Date(trip?.createdAt);
+  const formattedDate = date ? `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}` : "";
+
+console.log(" this  is the formated dated ",formattedDate);
+
   useEffect(() => {
     setTrip(selectedTrip || {});
     setEditedValues(selectedTrip || {});
@@ -250,7 +257,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
   return (
     <div className="bg-white h-[calc(100vh-100px)] p-6 rounded-lg shadow-lg overflow-y-auto">
       <div className="hidden">
-        <TripSheetPDF selectedTrip={trip} />
+        <TripSheetPDF selectedTrip={trip} formattedDate={formattedDate} />
       </div>
 
       {showDriverModal && (

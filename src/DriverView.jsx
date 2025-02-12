@@ -7,15 +7,17 @@ const DriverView = () => {
     const [tripDetails, setTripDetails] = useState(null);
     const location = useLocation();
     const [visible,setvisible]=useState(false)
+    const [hr,setHr]=useState("")
     // Extract the tripId from the URL
     const queryParams = new URLSearchParams(location.search);
     const tripId = queryParams.get('formId');
- // Signature states and refs
- const [showGuestModal, setShowGuestModal] = useState(false);
- const [showDriverModal, setShowDriverModal] = useState(false);
+ 
+     // Signature states and refs
+    const [showGuestModal, setShowGuestModal] = useState(false);
+    const [showDriverModal, setShowDriverModal] = useState(false);
 
- const guestSignatureRef = useRef(null);
- const driverSignatureRef = useRef(null);
+      const guestSignatureRef = useRef(null);
+      const driverSignatureRef = useRef(null);
     // Signature handling functions
     const handleSaveGuestSignature = () => {
       if (!guestSignatureRef.current.isEmpty()) {
@@ -60,7 +62,7 @@ const DriverView = () => {
         closeKm: "",
         closeHr: "",
        formId:tripId,
-       "totalHr":"25",
+       totalHr:"",
     
        toolCharges:null,
        parkingCharges:null
@@ -69,6 +71,36 @@ const DriverView = () => {
     const [driverSignature, setDriverSignature] = useState(null);
     const [guestSignature, setGuestSignature] = useState(null);
     
+// Function to calculate total hours
+const calculateTotalHours = (openHr, closeHr) => {
+  if (!openHr || !closeHr) return ""; // If values are empty, return empty string
+
+  const [openHours, openMinutes] = openHr.split(":").map(Number);
+  const [closeHours, closeMinutes] = closeHr.split(":").map(Number);
+
+  // Convert time to minutes since start of day
+  const openTime = openHours * 60 + openMinutes;
+  const closeTime = closeHours * 60 + closeMinutes;
+
+  if (closeTime < openTime) return "Invalid time"; // Handle invalid case
+
+  const totalMinutes = closeTime - openTime;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+console.log(" this is the total hrr ",`${hours}:${minutes.toString().padStart(2, "0")}`);
+setHr(`${hours}:${minutes.toString().padStart(2, "0")}`)
+
+  return `${hours}:${minutes.toString().padStart(2, "0")}`;
+};
+
+// Update totalHr whenever openHr or closeHr changes
+useEffect(() => {
+  setFormData((prevData) => ({
+    ...prevData,
+    totalHr: calculateTotalHours(prevData.openHr, prevData.closeHr)
+  }));
+}, [data.openHr, data.closeHr]); // Run effect when openHr or closeHr changes
 
 
  
@@ -84,7 +116,7 @@ const DriverView = () => {
         }));
     };
 
-    let totalKm = Number(data.openKm || 0) + Number(data.closeKm || 0);
+    
 
     const validateForm = () => {
       const requiredFields = ['openKm', 'openHr', 'closeKm', 'closeHr'];
@@ -265,12 +297,7 @@ const DriverView = () => {
                   </div>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-lg font-medium mb-2">Totals</h3>
-                <p className="text-gray-700"> Total KM: {Number(data.openKm || 0) + Number(data.closeKm || 0)} KM</p>
-
-                <p className="text-gray-700">Total Hours: Calculated based on time difference</p>
-              </div>
+            
             </div>
 
       
