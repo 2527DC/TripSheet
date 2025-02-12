@@ -60,7 +60,8 @@ const DriverView = () => {
         closeKm: "",
         closeHr: "",
        formId:tripId,
-       
+       "totalHr":"25",
+    
        toolCharges:null,
        parkingCharges:null
     });
@@ -125,7 +126,7 @@ const DriverView = () => {
         const response = await LocalClient.patch("addtripsheet", formData);
         console.log("Server response:", response.data);
 
-        if (response.data.success) {
+        if (response.status===200) {
             alert("Submitted successfully!");
             setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" , toolCharges:"",
               parkingCharges:""});
@@ -158,9 +159,9 @@ const DriverView = () => {
       <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
        <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Booking Details</h2>
            <div className="space-y-4">
-              <strong>M/S: {"dhbjhdvjhdfvhfdfmbdfh"}</strong> <br />
+              <strong>{"MLT Corporate Solutions Private Limited"}</strong> <br />
               <strong>Reporting:{tripDetails.reportingTime}</strong><br />
-              <strong>BookedBy: {"  reminder what to do "}</strong><br />
+              <strong>BookedBy: {tripDetails.bookedBy}</strong><br />
 
               <strong>Driver Name : {tripDetails.drivername}</strong><br />
               <strong>vehicleType: {tripDetails.vehicleType}</strong><br />

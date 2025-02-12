@@ -7,6 +7,7 @@ const TripSheetForm = ({method}) => {
 
   const [generatedLink, setGeneratedLink] = useState("");
  const [options,setOptions]=useState([{ value: "", label: "Select a Vendor" }])
+ const [CompanyOptions,setCompanyOptions]=useState([{ value: "", label: "Select a Company" }])
   const [data, setFormData] = useState({
     driver: "",
     vehicle: "",
@@ -20,28 +21,47 @@ const TripSheetForm = ({method}) => {
     vehicleType:""
   });
   
-  const getVendors = async () => {
+  // Fetch Vendors
+  const fetchVendors = async () => {
     try {
       const response = await LocalClient.get("getVendors");
-
-      if (response.status === 200 && response.data) {
-        // Transform response data into the correct format
-        const vendorOptions = response.data.map((vendor) => ({
+      if (response.status === 200) {
+        const vendors = response.data.map((vendor) => ({
           value: vendor.vendorName,
           label: vendor.vendorName,
         }));
-
-        // Add default option at the top
-        setOptions([{ value: "", label: "Select a Vendor" }, ...vendorOptions]);
+        setOptions([{ value: "", label: "Select a Vendor" }, ...vendors]);
       }
     } catch (error) {
       console.error("Error fetching vendors:", error);
     }
   };
 
+  // Fetch Companies
+  const fetchCompanies = async () => {
+    try {
+      const response = await LocalClient.get("getCompany");
+      if (response.status === 200) {
+        const companies = response.data.map((company) => ({
+          value: company.companyName,
+          label: company.companyName,
+        }));
+        setCompanyOptions([{ value: "", label: "Select a Company" }, ...companies]);
+      }
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  };
+
+  // Fetch Both Vendors and Companies
+  const getVendorsAndCompanies = async () => {
+    await Promise.all([fetchVendors(), fetchCompanies()]);
+  };
+
   useEffect(() => {
-    getVendors();
+    getVendorsAndCompanies();
   }, []);
+
   const generateLink = async () => {
     console.log(" this is the  request data ",data);
     try {
@@ -64,7 +84,9 @@ const TripSheetForm = ({method}) => {
         reportingAddress: "",
         dropAddress: "",
         acType:"",
-        reportingTime:""
+        reportingTime:"",
+        company:"",
+        bookedBy:""
       })
       }
     } catch (error) {
@@ -91,6 +113,10 @@ const TripSheetForm = ({method}) => {
       options: options, // Use the dynamically updated options
     },
     { id: "reportingTime", label: "Reporting Time", placeholder: "Reporting Time", type: "time", required: true, name: "reportingTime" },
+    { id: "company", label: "Company", placeholder: "Company", type: "select", required: true, name: "company",options: CompanyOptions, },
+    { id: "bookedBy", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedBy"  },
+
+
   ];
 
   const passengerInput = [
@@ -276,3 +302,36 @@ const TripSheetForm = ({method}) => {
 };
 
 export default TripSheetForm;
+
+
+// import { useState, useEffect } from "react";
+// import axios from "axios";
+
+// const MyComponent = () => {
+//   const [vendorOptions, setVendorOptions] = useState([]);
+//   const [companyOptions, setCompanyOptions] = useState([]);
+
+//   return (
+//     <div>
+//       {/* Vendor Dropdown */}
+//       <select>
+//         {vendorOptions.map((vendor) => (
+//           <option key={vendor.value} value={vendor.value}>
+//             {vendor.label}
+//           </option>
+//         ))}
+//       </select>
+
+//       {/* Company Dropdown */}
+//       <select>
+//         {companyOptions.map((company) => (
+//           <option key={company.value} value={company.value}>
+//             {company.label}
+//           </option>
+//         ))}
+//       </select>
+//     </div>
+//   );
+// };
+
+// export default MyComponent;

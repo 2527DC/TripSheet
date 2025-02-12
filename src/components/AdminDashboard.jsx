@@ -1,15 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { Menu, X, Plus, Search, Truck, Users, Building, LogOut } from 'lucide-react';
-
 import TripSheetForm from './TripsheetForm';
 import ManageDrivers from './ManageDrivers';
 import { useAuth } from '../store/ AuthProvider';
 import ManageVendor from './ManageVendor';
 import { TripList } from './Trips';
-import axios from 'axios';
 import { LocalClient } from '../Api/API_Client';
 import TripDetails from './TripDetails';
+import ManageCompany from './ManageCompany';
 
 
 const initialTrips = [
@@ -26,7 +25,8 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('trips'); // trips, drivers, vendors
   const [selectedVendor, setSelectedVendor] = useState('all');
   const [createtrip,setCreateTrip] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [tripDetailView,setripDetailView] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);    
   const [totalPages, setTotalPages] = useState(1);
   const tripsPerPage = 5;
 
@@ -115,6 +115,15 @@ function AdminDashboard() {
               Vendors
             </button>
             <button
+              onClick={() => setActiveTab('company')}
+              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
+                activeTab === 'company' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+              }`}
+            >
+              <Building size={20} />
+              Company
+            </button>
+            <button
               onClick={logout}
               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
                 activeTab === 'logout' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
@@ -128,49 +137,61 @@ function AdminDashboard() {
 
         {/* Main Content */}    
         <main className="flex-1 p-4 lg:p-6">
-          {activeTab === 'trips' && (
-            !createtrip?(  <div className="grid lg:grid-cols-2 gap-6">
-              {/* Trip List */}
-              <div className="bg-white rounded-lg shadow-sm p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Trip Sheets</h2>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onClick={handleNewClick}>
-                    <Plus size={18} />
-                    New Trip
-                  </button>
-                </div>
+        {activeTab === 'trips' && (
+       !createtrip ? (
+    <div className="">
+      {/* Trip List or Trip Details */}
+      
+        {selectedTrip ? (
+          // Show TripDetails when a trip is selected
+          <TripDetails selectedTrip={selectedTrip} goBack={() => setSelectedTrip(null)} />
+        ) : (
+          // Show TripList when no trip is selected
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Trip Sheets</h2>
+              <button 
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" 
+                onClick={handleNewClick}
+              >
+                <Plus size={18} />
+                New Trip
+              </button>
+            </div>
 
-                {/* Filter */}
-                <div className="mb-4">
-                                <select
-                  value={selectedVendor}
-                  onChange={(e) => setSelectedVendor(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                >
-                  <option value="all">All Vendors</option>
-                  {vendors.map(vendor => (
-                    <option key={vendor} value={vendor}>{vendor}</option>
-                  ))}
-                </select>
+            {/* Vendor Selection */}
+            <div className="mb-4">
+              <select
+                value={selectedVendor}
+                onChange={(e) => setSelectedVendor(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="all">All Vendors</option>
+                {vendors.map(vendor => (
+                  <option key={vendor} value={vendor}>{vendor}</option>
+                ))}
+              </select>
+            </div>
 
-                </div>
-                {/* Trip List */}
-                <TripList trips={filteredTrips} selectedTrip={selectedTrip} setSelectedTrip={setSelectedTrip} 
-                handleNewClick={handleNewClick}   currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages}/>
-              
-              </div>
-
-              {/* Trip Details */}
-             
-               {/* <TripDetails selectedTrip={selectedTrip}/> */}
-
-               {selectedTrip && activeTab === 'trips' && (
-            <TripDetails selectedTrip={selectedTrip} />
-          )}
-
-             
-            </div>):(<TripSheetForm method={handleNewClick}/>)
-          )}
+            {/* Trip List */}
+            <TripList 
+              trips={filteredTrips} 
+              selectedTrip={selectedTrip} 
+              setSelectedTrip={setSelectedTrip} 
+              handleNewClick={handleNewClick} 
+              currentPage={currentPage} 
+              setCurrentPage={setCurrentPage} 
+              totalPages={totalPages} 
+            />
+          </>
+        )}
+      
+    </div>
+  ) : (
+    // Show TripSheetForm when createtrip is true
+    <TripSheetForm method={handleNewClick} />
+  )
+)}
 
           {activeTab === 'drivers' && (
              <ManageDrivers />
@@ -178,6 +199,9 @@ function AdminDashboard() {
 
       {activeTab === 'vendors' && (
              <ManageVendor />
+          )}
+           {activeTab === 'company' && (
+             <ManageCompany />
           )}
          
         </main>
