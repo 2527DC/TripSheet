@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import html2pdf from "html2pdf.js";
+import { imageUrl } from "../Api/API_Client";
 
 
 
@@ -22,7 +23,7 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
 
     const [driverSignature, setDriverSignature] = useState('');
     const [guestSignature, setGuestSignature] = useState('');
-    const imageUrl = "https://api.mltcorporate.com/api/get-signature/";
+   
 
     const convertImageToBase64 = async (url) => {
         try {
@@ -81,9 +82,9 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
                                 </div>
                             </div>
                             <div className="w-[250px] flex flex-col pb-1">
-                                <span className="mr-2 pl-1 font-bold">M/s :<span className="text-sm font-normal">{"hchgfcghg chghgchchhhdk jhbjhsjndjnkdsjn dkjdskjdskjsdkjksdj"}</span> </span>
-                                <span className="mr-2 pl-1 font-bold">Reporting :<span className="text-sm font-normal">{selectedTrip.reportingTime}</span> </span>
-                                <span className="mr-2 pl-1 font-bold">Booked By :<span className="text-sm font-normal">{"hchgfcghg chghgchchhhdk jhbjhsjndj nkdsjn dkjdskjdskjsdkjksdj"}</span> </span>
+                                <span className="mr-2 pl-1 py-3 font-bold">Company :<span className="text-sm font-normal">{selectedTrip.company}</span> </span>
+                                <span className="mr-2 pl-1 py-3 font-bold">Reporting :<span className="text-sm font-normal">{selectedTrip.reportingTime}</span> </span>
+                                <span className="mr-2 pl-1 py-3 font-bold">Booked By :<span className="text-sm font-normal">{selectedTrip.bookedBy}</span> </span>
                             </div>
                         </div>
                     </div>
@@ -91,12 +92,12 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
                     <table className="table border-collapse w-full" style={{ border: "1px solid black",  }}>
                         <thead>
                             <tr>
-                                <th style={{ border: "1px solid black", padding: "2px" }}>Log Sheet No.</th>
-                                <th style={{ border: "1px solid black", padding: "1px" }}>Vehicle Type</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Log Sheet No.</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Vehicle Type</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Vehicle No.</th>
                                 <th style={{ border: "1px solid black", padding: "5px" }}>Driver's Name</th>
-                                <th style={{ border: "1px solid black", padding: "2px" }}>Parking Charges</th>
-                                <th style={{ border: "1px solid black", padding: "2px" }}>Tool Charges</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Parking Charges</th>
+                                <th style={{ border: "1px solid black", padding: "5px" }}>Tool Charges</th>
                                 
                             </tr>
                         </thead>
