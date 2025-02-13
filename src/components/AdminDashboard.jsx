@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Menu, X, Plus, Search, Truck, Users, Building, LogOut } from 'lucide-react';
+import { Menu, X, Plus, Search, Truck, Users, Building, LogOut, Boxes } from 'lucide-react';
 import TripSheetForm from './TripsheetForm';
 import ManageDrivers from './ManageDrivers';
 import { useAuth } from '../store/ AuthProvider';
@@ -9,6 +9,7 @@ import { TripList } from './Trips';
 import { LocalClient } from '../Api/API_Client';
 import TripDetails from './TripDetails';
 import ManageCompany from './ManageCompany';
+import ManageCategory from './ManangeCategory';
 
 
 const initialTrips = [
@@ -115,6 +116,15 @@ function AdminDashboard() {
               Vendors
             </button>
             <button
+              onClick={() => setActiveTab('category')}
+              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
+                activeTab === 'category' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
+              }`}
+            >
+              <Boxes size={20} />
+            Category
+            </button>
+            <button
               onClick={() => setActiveTab('company')}
               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg ${
                 activeTab === 'company' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'
@@ -202,6 +212,9 @@ function AdminDashboard() {
           )}
            {activeTab === 'company' && (
              <ManageCompany />
+          )}
+           {activeTab === 'category' && (
+             <ManageCategory />
           )}
          
         </main>

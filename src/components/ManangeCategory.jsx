@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { InputFields } from '../SmallComponents';
 import { LocalClient } from '../Api/API_Client';
 
-const ManageCompany = () => {
+const ManageCategory = () => {
   const [create, setCreate] = useState(false);
   const [data, setFormData] = useState({
-   companyName:""
+   category:""
   });
 
   const handleAddDriver = () => {
@@ -14,7 +14,7 @@ const ManageCompany = () => {
   };
 
   const DriverdetailsInput = [
-    { id: "companyName", label: "Company Name", placeholder: "Company Name", type: "text", required: true, name: "companyName" }
+    { id: "category", label: "Category Name ", placeholder: "Category Name", type: "text", required: true, name: "category" }
    
   ];
 
@@ -41,7 +41,7 @@ const ManageCompany = () => {
     try {
       console.log(" thsi sis the request data ",data);
       
-      const response = await LocalClient.post("createCompany", data);
+      const response = await LocalClient.post("createCategory", data);
       console.log(" this is the responce ",response);
 
       if (response.status ===201) {
@@ -66,7 +66,7 @@ const ManageCompany = () => {
         } else if (error.response.status === 401) {
           alert('Incorrect password. Please try again.');
         } else {
-          alert('Login failed: ' + error.response.data.message);
+          alert('error: ' + error.response.data.message);
         }
       } else if (error.request) {
         // No response was received from the server
@@ -84,13 +84,13 @@ const ManageCompany = () => {
     <div>
       <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Manage Company</h2>
+          <h2 className="text-lg font-semibold">Manage Category</h2>
           <button
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             onClick={handleAddDriver}
           >
             <Plus size={18} />
-            Add Company
+            Add Category
           </button>
         </div>
       </div>
@@ -98,7 +98,7 @@ const ManageCompany = () => {
       {/* Render the form when create is true */}
       {create && (
         <div className="mt-4 bg-gray-100 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-4">Add New Company</h3>
+          <h3 className="text-xl font-semibold mb-4">Add New Category</h3>
           <form onSubmit={handleSubmit}>
             <div className="flex grid-cols-3 gap-4">
               {DriverdetailsInput.map((input, index) => (
@@ -133,4 +133,4 @@ const ManageCompany = () => {
   );
 };
 
-export default ManageCompany;
+export default ManageCategory;

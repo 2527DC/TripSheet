@@ -8,6 +8,7 @@ const TripSheetForm = ({method}) => {
   const [generatedLink, setGeneratedLink] = useState("");
  const [options,setOptions]=useState([{ value: "", label: "Select a Vendor" }])
  const [CompanyOptions,setCompanyOptions]=useState([{ value: "", label: "Select a Company" }])
+ const [cateogryOptions,setcateogryOptions]=useState([{ value: "", label: "Select a Category" }])
   const [data, setFormData] = useState({
     driver: "",
     vehicle: "",
@@ -19,6 +20,7 @@ const TripSheetForm = ({method}) => {
     acType:"",
     reportingTime:"",
     vehicleType:""
+    
   });
   
   // Fetch Vendors
@@ -42,11 +44,35 @@ const TripSheetForm = ({method}) => {
     try {
       const response = await LocalClient.get("getCompany");
       if (response.status === 200) {
+        console.log(" this is data ",response.data)
         const companies = response.data.map((company) => ({
+          
+          
           value: company.companyName,
           label: company.companyName,
         }));
+
+        console.log(" this is category ",companies)
         setCompanyOptions([{ value: "", label: "Select a Company" }, ...companies]);
+      }
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  };
+
+  const fetchCategory = async () => {
+    try {
+      const response = await LocalClient.get("getCategory");
+      if (response.status === 200) {
+
+        console.log(" this is the responce " ,response.data.categoryList);
+        
+        const category = response.data.categoryList.map((category) => ({
+          value: category.category,
+          label: category.category,
+        }));
+        console.log(" this is category ",category)
+        setcateogryOptions([{ value: "", label: "Select a Category" }, ...category]);
       }
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -55,7 +81,7 @@ const TripSheetForm = ({method}) => {
 
   // Fetch Both Vendors and Companies
   const getVendorsAndCompanies = async () => {
-    await Promise.all([fetchVendors(), fetchCompanies()]);
+    await Promise.all([fetchVendors(), fetchCompanies(),fetchCategory()]);
   };
 
   useEffect(() => {
@@ -86,7 +112,8 @@ const TripSheetForm = ({method}) => {
         acType:"",
         reportingTime:"",
         company:"",
-        bookedBy:""
+        bookedBy:"",
+        category:""
       })
       }
     } catch (error) {
@@ -114,6 +141,7 @@ const TripSheetForm = ({method}) => {
     },
     { id: "reportingTime", label: "Reporting Time", placeholder: "Reporting Time", type: "time", required: true, name: "reportingTime" },
     { id: "company", label: "Company", placeholder: "Company", type: "select", required: true, name: "company",options: CompanyOptions, },
+    { id: "category", label: "Category", placeholder: "Category", type: "select", required: true, name: "category",options: cateogryOptions, },
     { id: "bookedBy", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedBy"  },
 
 
@@ -188,7 +216,7 @@ const TripSheetForm = ({method}) => {
       <div className='flex justify-between p-2 '> 
       <h2 className="text-2xl text-blue-800 font-bold mb-5">Create Trip Sheet</h2>
       <button className="rounded-lg bg-red-600 px-4  text-white"  onClick={method}>
-          close
+          Close
         </button>
       </div>
      
