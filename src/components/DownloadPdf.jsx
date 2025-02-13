@@ -134,7 +134,7 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.closeKm}</td>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.closeHr}</td>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.totalKm}</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>{"should add"}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.totalHr}</td>
                                 <td style={{ border: "1px solid black", padding: "1px" }}> 
                                     <img src={guestSignature} id="guest-signature" alt="Guest Signature" className="w-full" /></td>
                                
