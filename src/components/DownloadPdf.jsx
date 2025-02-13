@@ -105,8 +105,8 @@ const TripSheetPDF = ({ selectedTrip,formattedDate}) => {
                             <tr>
                                 <td  className="items-center"style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.id}</td>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.vehicleType}</td>
-                                <td  className="px-4" style={{ border: "1px solid black", padding: "5px" }}>KA-05-MG-1234</td>
-                                <td style={{ border: "1px solid black", padding: "5px" }}>monahan dash vijaya </td>
+                                <td  className="px-4" style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.vehicleNo}</td>
+                                <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.drivername} </td>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.toolCharges===null?"0":selectedTrip.toolCharges} Rs</td>
                                 <td style={{ border: "1px solid black", padding: "5px" }}>{selectedTrip.parkingCharges===null?"0":selectedTrip.parkingCharges} Rs</td>
                             </tr>
