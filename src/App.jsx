@@ -1,72 +1,91 @@
-// import React, { useState, useEffect } from "react";
-// import { useAuth } from "./store/ AuthProvider";
-// import FormCreator from "./components/FormCreator";
-// import FormFiller from "./components/FormCreator";
-// import FormComponent from "./components/FormComponent";
-// import FormBuilder from "./components/FormComponent";
 
 
-
-
-// function App() {
-//   const { isAuthenticated, userRole, loading, login, logout } = useAuth();
-
-//   // // If the app is loading, we can show a loading spinner or message
-//   // if (loading) return <div>Loading...</div>;
-
-//   // if (!isAuthenticated) {
-//   //   return <Login onLogin={login} />;
-//   // }
-
-//   return (
-//     // <div>
-//     //   {userRole === "driver" && <DriverView />}
-//     //   {userRole === "admin" && <AdminView />}
-//     // </div>
-//     <FormBuilder/>
-//   );
-// }
-
-// export default App;
-
-
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import AdminDashboard from './components/AdminDashboard';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Sidebar from './components/Sidebar';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Unauthorized from './pages/Unauthorized';
+import { ROLES } from './utils/auth';
+import ManageCompany from './components/ManageCompany';
 import TripSheetForm from './components/TripsheetForm';
+import { Menu } from 'lucide-react';
+import { useState } from 'react';
+import ManageDrivers from './components/ManageDrivers';
 import DriverView from './DriverView';
-import { Login } from './Loginpage';
-import { useAuth } from './store/ AuthProvider';
-import DownloadPDF from './components/DownloadPdf';
-import TripSheetPDF from './components/DownloadPdf';
+import TripForm from './components/TripForm';
+import TripSheet from './components/TripSheet';
+import ManageVendor from './components/ManageVendor';
 
+// Layout component for authenticated pages
 
-const isAuthenticated = () => {
-  return localStorage.getItem("adminToken") !== null; // Simulated authentication check
-};
-
-const ProtectedRoute = ({ element }) => {
-  const { isAuthenticated} = useAuth();
-
-  return isAuthenticated ? element : <Navigate to="/admin-login" />;
-};
-
-function App() {
+const Layout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <Router>
-      <Routes>
-        {/* Admin Routes (Protected) */}
-        <Route path="/admin-login" element={<Login />} />
-        <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} />} />
-       
-        <Route path="/create-trip" element={<ProtectedRoute element={<TripSheetForm/>} />} />
-        {/* Public Driver Form (No Login Required) */}
-        <Route path="/driver-form" element={<DriverView />} />
-        <Route path="/pdf" element={<TripSheetPDF/>} />
-        {/* Default Route */}
-        <Route path="/" element={<Navigate to="/admin-login" />} />
-      </Routes>
-    </Router>
+    <div className="flex">
+      {/* Sidebar (Hidden on toggle) */}
+      {isSidebarOpen && <Sidebar />}
+
+      <div className={`flex-1  min-h-screen bg-gray-100 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Navbar */}
+        <div className="bg-gray-500 text-white py-2 px-4 flex items-center shadow-md fixed w-full">
+          <button
+            className="text-white hover:bg-gray-700 p-2 rounded transition"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="ml-4 text-xl font-semibold">Dashboard</h1>
+        </div>
+
+        {/* Page Content */}
+        <div className="pt-12 px-4 mt-3"> 
+          <Outlet />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// Placeholder components
+const Clients = () => <h1 className="text-2xl font-bold">Clients</h1>;
+const Vehicles = () => <h1 className="text-2xl font-bold">Vehicles</h1>;
+const Bookings = () => <h1 className="text-2xl font-bold">Bookings</h1>;
+const Vendors = () => <h1 className="text-2xl font-bold">Vendors</h1>;
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/driver-form" element={<DriverView />} />
+          <Route path="/check" element={<TripForm/>} />
+             {/* Protected Routes */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+                <Route path="/clients" element={<ManageCompany />} />
+                <Route path="/tripsheet-list" element={<TripSheet/>} />
+                <Route path="/tripsheets" element={<TripSheetForm />} />
+
+              </Route>
+              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
+                <Route path="/driver" element={<ManageDrivers />} />
+              </Route>
+              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
+                <Route path="/vendors" element={<ManageVendor />} />
+              </Route>
+            </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

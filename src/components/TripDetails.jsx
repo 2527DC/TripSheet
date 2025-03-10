@@ -105,7 +105,7 @@ console.log(" this  is the formated dated ",formattedDate);
   };
   const fieldsToShow = [
     { label: "Company", key: "company" },
-    { label: "Vendor", key: "vendor" },
+    { label: "VendorName", key: "vendorName" },
     { label: "Booked By", key: "bookedBy" },
     { label: "Driver Name", key: "drivername" },
     { label: "Vehicle No", key: "vehicleNo" },
