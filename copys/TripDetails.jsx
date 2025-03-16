@@ -34,7 +34,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
         date.getMonth() + 1
       ).padStart(2, "0")}/${date.getFullYear()}`
     : "";
-  
+
   console.log("this is the formatted date", formattedDate);
 
   useEffect(() => {
@@ -45,12 +45,10 @@ const TripDetails = ({ selectedTrip, goBack }) => {
   }, [selectedTrip]);
 
   const handleStartEditing = (key) => {
-    console.log(" this is rge key " ,key);
-    
     setEditingFields((prev) => ({ ...prev, [key]: true }));
   
     // ✅ Store the original value before editing
-    setPreviousValues(trip[key]);
+    setPreviousValues((prev) => (trip[key] ));
   
     setEditedValues((prev) => ({ ...prev, [key]: trip[key] }));
   };
@@ -90,7 +88,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
         formId: trip.formId,
         fieldName: key,
         fieldValue: value,
-        
+        previousValues
       });
 
       const response = await LocalClient.patch("editField", {
@@ -115,7 +113,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
 
   const handleChange = (key, value) => {
     setEditedValues((prev) => ({ ...prev, [key]: value }));
-    console.log(" this is the edidted fiels  ",key ,);
+    console.log(" this is the edidted fiels  ",editedValues[key] ,);
    
   };
 
@@ -220,19 +218,13 @@ const TripDetails = ({ selectedTrip, goBack }) => {
   };
 
   const renderEditableField = (key, label, type = "input") => {
-
-    const userRole= "SUPER_ADMIN";
     const isEditing = editingFields[key];
-    const isStatusUpdated= true;
-    const canEdit = 
-      userRole === "SUPER_ADMIN" || // SUPER_ADMIN can always edit
-      (userRole === "ADMIN" && !isStatusUpdated); // ADMIN can edit only
-   
+
     return (
       <div className="bg-gray-50 p-3 rounded-lg" key={key}>
         <div className="flex justify-between items-center mb-1">
           <label className="text-sm font-medium text-gray-600">{label}</label>
-          {canEdit && !isEditing ? (
+          {!isEditing ? (
             <button
               onClick={() => handleStartEditing(key)}
               className="text-blue-600 hover:text-blue-700 p-1 rounded"

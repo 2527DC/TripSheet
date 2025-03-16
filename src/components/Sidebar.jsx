@@ -4,7 +4,8 @@ import { hasPermission } from '../utils/auth';
 import { ROLES } from '../utils/auth';
 import { 
   Users, Truck, Calendar, Building2, 
-  LayoutDashboard, LogOut 
+  LayoutDashboard, LogOut, 
+  PersonStanding
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -21,6 +22,12 @@ const Sidebar = () => {
       name: 'Dashboard',
       icon: LayoutDashboard,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
+    },
+    {
+      path: '/manage-admins',
+      name: 'Admins',
+      icon: PersonStanding,
+      roles: [ROLES.SUPER_ADMIN]
     },
     {
       path: '/clients',

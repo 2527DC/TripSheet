@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import SignaturePad from 'react-signature-canvas';
-import {  LocalClient } from './Api/API_Client'; 
+
 import { useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { LocalClient } from '../Api/API_Client';
 
 const DriverView = () => { 
     const [tripDetails, setTripDetails] = useState(null);
@@ -14,10 +16,10 @@ const DriverView = () => {
  
      // Signature states and refs
     const [showGuestModal, setShowGuestModal] = useState(false);
-    const [showDriverModal, setShowDriverModal] = useState(false);
+
 
       const guestSignatureRef = useRef(null);
-      const driverSignatureRef = useRef(null);
+     
     // Signature handling functions
     const handleSaveGuestSignature = () => {
       if (!guestSignatureRef.current.isEmpty()) {
@@ -26,12 +28,7 @@ const DriverView = () => {
       setShowGuestModal(false);
   };
 
-  const handleSaveDriverSignature = () => {
-      if (!driverSignatureRef.current.isEmpty()) {
-          setDriverSignature(driverSignatureRef.current.toDataURL());
-      }
-      setShowDriverModal(false);
-  };
+
 
     useEffect(() => {
       const fetchTripDetails = async () => {
@@ -68,39 +65,50 @@ const DriverView = () => {
        parkingCharges:null
     });
 
-    const [driverSignature, setDriverSignature] = useState(null);
+
     const [guestSignature, setGuestSignature] = useState(null);
     
-// Function to calculate total hours
-const calculateTotalHours = (openHr, closeHr) => {
-  if (!openHr || !closeHr) return ""; // If values are empty, return empty string
+    // Convert 12-hour time format (hh:mm AM/PM) to minutes since start of the day
+    const convertToMinutes = (time) => {
+      if (!time) return null;
+    
+      const [hours, minutes] = time.split(":").map(Number);
+      return hours * 60 + minutes; // Convert to total minutes
+    };
+    
 
-  const [openHours, openMinutes] = openHr.split(":").map(Number);
-  const [closeHours, closeMinutes] = closeHr.split(":").map(Number);
-
-  // Convert time to minutes since start of day
-  const openTime = openHours * 60 + openMinutes;
-  const closeTime = closeHours * 60 + closeMinutes;
-
-  if (closeTime < openTime) return "Invalid time"; // Handle invalid case
-
-  const totalMinutes = closeTime - openTime;
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  
-console.log(" this is the total hrr ",`${hours}:${minutes.toString().padStart(2, "0")}`);
-setHr(`${hours}:${minutes.toString().padStart(2, "0")}`)
-
-  return `${hours}:${minutes.toString().padStart(2, "0")}`;
-};
-
+    const calculateTotalHours = (openHr, closeHr) => {
+      const openTime = convertToMinutes(openHr);
+      const closeTime = convertToMinutes(closeHr);
+    
+      if (openTime === null || closeTime === null) return ""; // Return empty if missing values
+    
+      let totalMinutes;
+      
+      if (closeTime >= openTime) {
+        totalMinutes = closeTime - openTime; // Normal case
+      } else {
+        totalMinutes = closeTime + (24 * 60 - openTime); // If closing time is after midnight
+      }
+    
+      if (totalMinutes <= 0) {
+        return ""; // Return empty if negative time detected
+      }
+    
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+    
+      return `${hours}:${minutes.toString().padStart(2, "0")}`;
+    };
+    
 // Update totalHr whenever openHr or closeHr changes
 useEffect(() => {
+  const totalHours = calculateTotalHours(data.openHr, data.closeHr);
   setFormData((prevData) => ({
     ...prevData,
-    totalHr: calculateTotalHours(prevData.openHr, prevData.closeHr)
+    totalHr: totalHours,
   }));
-}, [data.openHr, data.closeHr]); // Run effect when openHr or closeHr changes
+}, [data.openHr, data.closeHr]);
 
 
  
@@ -117,37 +125,47 @@ useEffect(() => {
     };
 
     
-
     const validateForm = () => {
-      const requiredFields = ['openKm', 'openHr', 'closeKm', 'closeHr'];
-      const missingFields = requiredFields.filter(field => !data[field]);
-      
+      const requiredFields = ["openKm", "openHr", "closeKm", "closeHr"];
+      const missingFields = requiredFields.filter((field) => !data[field]);
+  
+    
       if (missingFields.length > 0) {
-          alert("Please fill all required fields");
-          return false;
+        toast.warning("Please fill all required fields");
+        return false;
       }
-
-      if (!driverSignature) {
-          alert("Driver signature is required");
-          return false;
-      }
-
+  
       if (!guestSignature) {
-          alert("Guest signature is required");
-          return false;
+        toast.warning("Guest signature is required");
+        return false;
       }
-
+      if(data.closeKm< data.openKm){
+        toast.warning("Closing Km Must be greater than Opening Km");
+        return false;
+      }
+  
+      // Validate time logic
+      const totalHours = calculateTotalHours(data.openHr, data.closeHr);
+      if (!totalHours) {
+        toast.warning("Closing time must be later than opening time");
+        return false;
+      }
+  
       return true;
-  };
+    };
+  
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()){
+      toast.error(" validation error")
+
+    return;
+    }
 
     const formData = {
         ...data,
-        Driversignature: driverSignature, // Already base64, no need for toDataURL()
         Guestsignature: guestSignature,
         totalKm: Number(data.openKm) + Number(data.closeKm),
     };
@@ -159,16 +177,34 @@ useEffect(() => {
         console.log("Server response:", response.data);
 
         if (response.status===200) {
-            alert("Submitted successfully!");
+           toast.success("Submitted successfully!");
             setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" , toolCharges:"",
               parkingCharges:""});
             setGuestSignature(null);
-            setDriverSignature(null);
+            setRating(0)
         }
     } catch (error) {
-        alert("Submission failed!");
-        console.error("Error:", error);
+
+      if(error.status===400){
+        toast.error(" Form has been submitted already")
+      }else{
+        toast.error("Submission failed!");
+      }
+    
     }
+    
+};
+
+// Add this to your existing state declarations at the top
+const [rating, setRating] = useState(0);
+
+// Add this function to handle rating changes
+const handleRatingChange = (newRating) => {
+    setRating(newRating);
+    setFormData((prevData) => ({
+        ...prevData,
+        rating: newRating // Add rating to form data
+    }));
 };
 
     return<>
@@ -193,9 +229,9 @@ useEffect(() => {
            <div className="space-y-4">
               <strong>{"MLT Corporate Solutions Private Limited"}</strong> <br />
               <strong>Reporting:{tripDetails.reportingTime}</strong><br />
-              <strong>BookedBy: {tripDetails.bookedBy}</strong><br />
+              <strong>BookedBy: {tripDetails.customer}</strong><br />
 
-              <strong>Driver Name : {tripDetails.drivername}</strong><br />
+              <strong>Driver Name : {tripDetails.driverName}</strong><br />
               <strong>vehicleType: {tripDetails.vehicleType}</strong><br />
               <strong>vehicleNo:{tripDetails.vehicleNo}</strong>   <br />
              </div>
@@ -204,10 +240,10 @@ useEffect(() => {
         <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">Passanger Details</h2>
               <div className="space-y-4">
-             <strong>passenger name: {tripDetails.passengerName}</strong>    <br />
-              <strong>passenger PhNo: {tripDetails.passengerPh}</strong>         <br />
-              <strong>reporting address :{tripDetails.reportingAddress}</strong>   <br />
-              <strong>droping address :{tripDetails.dropAddress}</strong>   <br />
+             <strong>Passenger Name: {tripDetails.customer}</strong>    <br />
+              <strong>Passenger PhNo: {tripDetails.customerPh}</strong>         <br />
+              <strong>Reporting Address :{tripDetails.reportingAddress}</strong>   <br />
+              <strong>Droping Address :{tripDetails.dropAddress}</strong>   <br />
              </div>
                </div>
          
@@ -318,7 +354,7 @@ useEffect(() => {
                                         >
                                             Re-sign
                                         </button>
-                                    </div>
+                                    </div>  
                                 ) : (
                                     <button
                                         type="button"
@@ -330,29 +366,7 @@ useEffect(() => {
                                 )}
                             </div>
 
-                            <div className="border p-4 rounded-lg">
-                                <h3 className="font-medium mb-2">Driver Signature</h3>
-                                {driverSignature ? (
-                                    <div className="mb-2">
-                                        <img src={driverSignature} alt="Driver Signature" className="h-20 border" />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowDriverModal(true)}
-                                            className="ml-2 text-blue-600 hover:text-blue-800"
-                                        >
-                                            Re-sign
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDriverModal(true)}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                    >
-                                        Add Driver Signature
-                                    </button>
-                                )}
-                            </div>
+                           
                         </div>
                     </div>
 
@@ -390,41 +404,35 @@ useEffect(() => {
                             </div>
                         </div>
                     )}
-
-                    {showDriverModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                            <div className="bg-white p-6 rounded-lg w-11/12 max-w-2xl">
-                                <h2 className="text-xl font-semibold mb-4">Driver Signature</h2>
-                                <div className="border border-gray-300 rounded-lg bg-gray-100 mb-4">
-                                    <SignaturePad
-                                        ref={driverSignatureRef}
-                                        
-                                        canvasProps={{ className: 'w-full', style: { height: '200px' } }}
-                                    />
-                                </div>  
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => driverSignatureRef.current.clear()}
-                                        className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
-                                    >
-                                        Clear
-                                    </button>
-                                    <button
-                                        onClick={handleSaveDriverSignature}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                    >
-                                        Save Signature
-                                    </button>
-                                    <button
-                                        onClick={() => setShowDriverModal(false)}
-                                        className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                                    >
-                                        Back to Form
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+{/* Rating Section */}
+<div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold mb-4">Feedback Rating</h2>
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="flex space-x-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                type="button"
+                                onClick={() => handleRatingChange(star)}
+                                className={`text-3xl ${
+                                    star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                                }`}
+                            >
+                                ★
+                            </button>
+                        ))}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                        {rating === 1 && "Very Unsatisfied"}
+                        {rating === 2 && "Unsatisfied"}
+                        {rating === 3 && "Neutral"}
+                        {rating === 4 && "Satisfied"}
+                        {rating === 5 && "Very Satisfied"}
+                        {rating === 0 && "Please select a rating"}
+                    </div>
+                </div>
+            </div>
+                  
 
             {/* Submit Button */}
             <div className="p-2 flex justify-center items-center">
@@ -440,7 +448,8 @@ useEffect(() => {
         </form>
       </div>
     </div>
-    ):( <p>Loading trip details...</p>)}</>
+    ):( <p>Loading trip details...</p>)}
+    </>
 }
 
 

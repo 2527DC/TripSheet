@@ -8,13 +8,12 @@ const handleDownloadExcel = (data) => {
   const customHeaders = [
     "Driver Name", 
     "Vehicle Number", 
-    "Passenger Name", 
-    "Passenger Phone", 
+    "Customer Name", 
+    "Customer Phone", 
     "Reporting Address", 
     "Drop Address", 
     "AC Type", 
     "Booking Status", 
-    "Booked By", 
     "Company", 
     "Vendor Name", 
     "Reporting Time"
@@ -24,13 +23,12 @@ const handleDownloadExcel = (data) => {
   const formattedData = data.map((item) => [
     item.drivername,
     item.vehicleNo,
-    item.passengerName,
-    item.passengerPh,
+    item.customer,
+    item.customerPh,
     item.reportingAddress,
     item.dropAddress,
     item.acType,
     item.status,
-    item.bookedBy,
     item.company,
     item.vendorName,
     item.reportingTime
