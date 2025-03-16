@@ -308,12 +308,6 @@ const TripSheetForm = ({method}) => {
     className="border p-2 w-full rounded"
   />
     
-    // <InputFields
-    //   key={index}
-    //   {...input}
-    //   value={data[input.name] || ""}
-    //   onChange={handleInputChange}
-    // />
   );
 })}
 

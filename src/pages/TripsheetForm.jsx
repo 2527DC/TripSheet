@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { LocalClient } from "../Api/API_Client";
-import axios from "axios";
 import { Companys } from "../Api/Endpoints";
 import { X, Search, Truck, Users, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 
 const TripSheetForm = () => {
   // ... [Keep all the existing state and useEffect hooks as is]
-
 
   const navigate =useNavigate()
   const [generatedLink, setGeneratedLink] = useState("");
@@ -22,6 +22,7 @@ const TripSheetForm = () => {
       { value: "Corporate", label: "Corporate" },
   
     ]);
+
     
     const vehicleDetailsInput = [
       { id: "vehicleType", label: "Vehicle Type", type: "text", required: true, name: "vehicleType" ,},
@@ -51,7 +52,7 @@ const TripSheetForm = () => {
       dropAddress: "",
       acType: "",
       reportingTime: "",
-      "createdAt": "2025-02-18T04:13:56.554Z"
+      // "createdAt": "2025-02-18T04:13:56.554Z"
      
     });
   
@@ -61,7 +62,7 @@ const TripSheetForm = () => {
     const [drivers, setDrivers] = useState([]);
     const [driverName,setDriverName]=useState();
 
-    // let driverName="";
+//  fetching the Vehicles by vehicle no 
     useEffect(() => {
       if (search.length < 2 || data.vehicle === search) {
         return;
@@ -70,7 +71,7 @@ const TripSheetForm = () => {
       const fetchVehicles = async () => {
         setLoading(true);
         try {
-          const result = await axios.get(`http://0.0.0.0:3000/api/vehicles?search=${search}`);
+          const result = await LocalClient.get(`vehicles?search=${search}`);
           console.log("🚀 API Response:", result);
           console.log("✅ Response Data:", result.data);
   
@@ -175,12 +176,7 @@ const TripSheetForm = () => {
     useEffect(()=>{
   
       const  found= customer.find((d)=> d.customerName === data.customer)
-  
 
-      
-     
-      
-      
          let customerPh = found && found.phoneNo? found.phoneNo : "phone notfound";
          setFormData((prev) => ({
            ...prev,
@@ -209,11 +205,7 @@ const TripSheetForm = () => {
         vehicle:vehicle.vehicleNo || "",
       }));
     };
-  
-          const handlesubbmit=()=>{
-        console.log(" this is the subbmited data ",data);
-          }
-  
+ 
   
      const  handleCompanyAutoFill=(company)=>{    
       setSearchCompany(company.companyName);
@@ -241,6 +233,7 @@ const TripSheetForm = () => {
         alert("Failed to copy link: " + err);
       });
   };
+  
   // https://web.whatsapp.com/
   const shareOnWhatsApp = () => {
     const generatedLink = 'Your message or link here'; // Example: 'Check out this amazing link!'
@@ -269,7 +262,7 @@ const TripSheetForm = () => {
 
 
       if (res.status===201) {
-       alert(" TripSheet Created ")
+       toast.success(" TripSheet Created ")
         setSearch("")
         setSearchCompany("")
        setFormData({

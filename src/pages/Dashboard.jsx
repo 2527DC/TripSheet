@@ -33,19 +33,7 @@ const Dashboard = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          user?.role && stat.roles.includes(user.role) && ( // ✅ Fix applied
-            <div
-              key={index}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <h3 className="text-gray-500 text-sm">{stat.title}</h3>
-              <p className="text-2xl font-bold mt-2">{stat.value}</p>
-            </div>
-          )
-        ))}
-      </div>
+  <h1> thie will  be the Dashboard overview </h1>
     </div>
   );
 };

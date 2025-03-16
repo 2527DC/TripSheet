@@ -101,14 +101,15 @@ const ManageCategory = () => {
           <h3 className="text-xl font-semibold mb-4">Add New Category</h3>
           <form onSubmit={handleSubmit}>
             <div className="flex grid-cols-3 gap-4">
-              {DriverdetailsInput.map((input, index) => (
-                <InputFields
+              {/* {DriverdetailsInput.map((input, index) => (
+                <
+                
                   key={index}
                   {...input}
                   value={data[input.name] || ""}
                   onChange={handleInputChange}
                 />
-              ))}
+              ))} */}
             </div>
 
             <div className="flex gap-3 mt-4">
