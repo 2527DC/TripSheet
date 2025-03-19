@@ -1,223 +1,229 @@
-import { useEffect, useState } from 'react';
-import { InputFields } from '../SmallComponents';
-import { LocalClient } from '../Api/API_Client';
-import axios from 'axios';
+import { useEffect, useState } from "react";
+import { LocalClient } from "../Api/API_Client";
+import { Companys } from "../Api/Endpoints";
+import { X, Search, Truck, Users, Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
-const TripSheetForm = ({method}) => {
-  
 
+const TripSheetForm = () => {
+  // ... [Keep all the existing state and useEffect hooks as is]
+
+  const navigate =useNavigate()
   const [generatedLink, setGeneratedLink] = useState("");
- const [options,setOptions]=useState([{ value: "", label: "Select a Vendor" }])
- const [CompanyOptions,setCompanyOptions]=useState([{ value: "", label: "Select a Company" }])
- const [cateogryOptions,setcateogryOptions]=useState([{ value: "", label: "Select a Category" }])
-  const [data, setFormData] = useState({
-    driver: "",
-    vehicle: "",
-    passengerName: "",
-    passengerPhoneNumber: "",
-    reportingAddress: "",
-    dropAddress: "",
-    acType:"",
-    reportingTime:"",
-    vehicleType:"",
-   
-  });
+    const [options, setOptions] = useState([{ value: "", label: "Select a Vendor" }]);
+    const [customerOption,setCustomerOption]=useState([{ value: "", label: "Select a Customer" }])
+    const [customer,setCustomer]=useState([{ value: "", label: "Select a Customer" }])
+    const[searchCompany,setSearchCompany]=useState("")
+    const[companys, setCompanies]=useState([])
   
-  const [search, setSearch] = useState("");
-  const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+    const [categoryOptions, setCategoryOptions] = useState([
+      { value: "", label: "Select a Category" },
+      { value: "Corporate", label: "Corporate" },
+  
+    ]);
 
-  useEffect(() => {
-    if (search.length < 2) {
-      setVehicles([]);
+    
+    const vehicleDetailsInput = [
+      { id: "vehicleType", label: "Vehicle Type", type: "text", required: true, name: "vehicleType" ,},
+      { id: "driver", label: "Driver Name", type: "select", required: true, name: "driver", options: options, },
+      { id: "driver_ph", label: "Driver Ph", type: "tel", required: true, name: "driverPh" },
+      {id: "vendor", label: "Vendor",type: "text",required: true,name: "vendorName",},
+      { id: "reportingTime", label: "Reporting Time", type: "time", required: true, name: "reportingTime" },
+      { id: "category", label: "Category", type: "select", required: true, name: "category", options: categoryOptions },
+    ];
+    const passengerInput = [
+      { id: "passengerName", label: "Customer Name", placeholder: "Enter passenger name", type: "select", required: true, name: "customer" ,options: customerOption},
+      { id: "customerPh", label: "Phone Number", placeholder: "Phone Number", type: "tel", required: true, name: "customerPh" },
+      { id: "reportingAddress", label: "Reporting Address", placeholder: "Reporting Address", type: "text", required: true, name: "reportingAddress" },
+      { id: "dropAddress", label: "Drop Address", placeholder: "Drop Address", type: "text", required: true, name: "dropAddress" },
+    ];
+  
+    const [data, setFormData] = useState({
+      driver: "",
+      driverPh: "",
+      vendorName: "",
+      vehicle: "",
+      vehicleType: "",
+      company:"",
+      customer:"",
+      customerPh: "",
+      reportingAddress: "",
+      dropAddress: "",
+      acType: "",
+      reportingTime: "",
+      // "createdAt": "2025-02-18T04:13:56.554Z"
+     
+    });
+  
+    const [search, setSearch] = useState("");
+    const [vehicles, setVehicles] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [drivers, setDrivers] = useState([]);
+    const [driverName,setDriverName]=useState();
+
+//  fetching the Vehicles by vehicle no 
+    useEffect(() => {
+      if (search.length < 2 || data.vehicle === search) {
+        return;
+      }
+  
+      const fetchVehicles = async () => {
+        setLoading(true);
+        try {
+          const result = await LocalClient.get(`vehicle-list?search=${search}`);
+          console.log("🚀 API Response:", result);
+          console.log("✅ Response Data:", result.data);
+  
+          if (result.status === 200) {
+            console.log("🎯 Status OK, Data:", result.data);
+          }
+  
+          setVehicles(result.data);
+        } catch (error) {
+          console.error("❌ Error fetching vehicles:", error);
+        }
+        setLoading(false);
+      };
+  
+      const delayDebounce = setTimeout(fetchVehicles, 300);
+  
+      return () => clearTimeout(delayDebounce);
+    }, [search]);
+  
+  
+  
+    //  driver dropdown logic 
+    useEffect(() => {
+      const driverOptions = drivers.map((driver) => ({
+        value: driver.driverName,
+        label: driver.driverName,
+  
+      }));
+      setOptions([{ value: "", label: "Select a driver" }, ...driverOptions]);
+    }, [drivers]);
+  
+  
+    
+    useEffect(() => {
+      const  customerOptions = customer.map((customer) => ({
+        value: customer.customerName,
+        label: customer.customerName,
+  
+      }));
+     setCustomerOption([{ value: "", label: "Select a customer" }, ...customerOptions]);
+     console.log(" this is the array of customers",customerOptions);
+     
+    }, [customer]); 
+  
+  // This Useeffect is used to get the comapay list and its customers 
+  
+  useEffect(()=>{
+    if (searchCompany.length < 2 || data.company === searchCompany) {
       return;
     }
+  const fetchCompanyList= async()=>{
+    
+       const  companys= await LocalClient.get(Companys)
   
-    const fetchVehicles = async () => {
-      setLoading(true);
-      try {
-        const result = await axios.get(`http://0.0.0.0:3000/api/vehicles?search=${search}`);
-        
-        console.log("🚀 API Response:", result); // Logs full response
-        console.log("✅ Response Data:", result.data); // Logs just the data
+       if (companys.status===200) {
+         setCompanies(companys.data)
+       console.log(" this is the responce data of the  companyDetails", companys);
+       
+       }}
+    const delayDebounce = setTimeout(fetchCompanyList, 300);
+    return () => clearTimeout(delayDebounce);
   
-        if (result.status === 200) {
-          console.log("🎯 Status OK, Data:", result.data);
-        }
-        
-        setVehicles(result.data); // Store the fetched vehicles
-      } catch (error) {
-        console.error("❌ Error fetching vehicles:", error);
+  },[searchCompany]) 
+  
+  
+  
+    const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      if (name=="driver") {
+        console.log("this is the driver" ,value);
+        setDriverName(value)
       }
-      setLoading(false);
+
+
+  
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+  
     };
   
-    const delayDebounce = setTimeout(fetchVehicles, 300); // 🔥 Debounce API calls
   
-    return () => clearTimeout(delayDebounce);
-  }, [search]);
+    /* this is the  method  to 
+    get the driver phoen and vendor related to the driver */
+    useEffect(()=>{
   
+   const driver = drivers.find((d) => d.driverName === driverName);
   
-  // Fetch Vendors
-  const fetchVendors = async () => {
-    try {
-      const response = await LocalClient.get("getVendors");
-      if (response.status === 200) {
-        const vendorsName = response.data.map((vendor) => ({
-          value: vendor.vendorName,
-          label: vendor.vendorName,
-        }));
-        setOptions([{ value: "", label: "Select a Vendor" }, ...vendorsName]);
-      }
-    } catch (error) {
-      console.error("Error fetching vendors:", error);
-    }
-  };
-
-  // Fetch Companies
-  const fetchCompanies = async () => {
-    try {
-      const response = await LocalClient.get("getCompany");
-      if (response.status === 200) {
-        console.log(" this is data ",response.data)
-        const companies = response.data.map((company) => ({
-          
-          
-          value: company.companyName,
-          label: company.companyName,
-        }));
-
-        console.log(" this is category ",companies)
-        setCompanyOptions([{ value: "", label: "Select a Company" }, ...companies]);
-      }
-    } catch (error) {
-      console.error("Error fetching companies:", error);
-    }
-  };
-
-  const fetchCategory = async () => {
-    try {
-      const response = await LocalClient.get("getCategory");
-      if (response.status === 200) {
-
-        console.log(" this is the responce " ,response.data.categoryList);
-        
-        const category = response.data.categoryList.map((category) => ({
-          value: category.category,
-          label: category.category,
-        }));
-        console.log(" this is category ",category)
-        setcateogryOptions([{ value: "", label: "Select a Category" }, ...category]);
-      }
-    } catch (error) {
-      console.error("Error fetching companies:", error);
-    }
-  };
-
-  // Fetch Both Vendors and Companies
-  const getVendorsAndCompanies = async () => {
-    await Promise.all([fetchVendors(), fetchCompanies(),fetchCategory()]);
-  };
-
-  useEffect(() => {
-    getVendorsAndCompanies();
-  }, []);
-
-  const generateLink = async () => {
-    console.log(" this is the  request data ",data);
-    try {
-      const res = await LocalClient.post("/generate-link", data);
-      const link = `${window.location.origin}/driver-form?formId=${res.data.data.formId}`;
-      console.log(" this is the responce ",res);
+   console.log(" this is the  method inside the useeffect to get the driver phoen and vendor related to the driver ");
      
-      setGeneratedLink(link);
-
-
-      if (res.status===201) {
-       alert(" TripSheet Created ")
-        
-       setFormData({
-        driver: "",
-        vehicle: "",
-        vendorName: "", 
-        passengerName: "",
-        passengerPhoneNumber: "",
-        reportingAddress: "",
-        dropAddress: "",
-        acType:"",
-        reportingTime:"",
-        company:"",
-        bookedBy:"",
-        category:""
-      })
-      }
-    } catch (error) {
-
-      console.log(" An error occured ",error);
-      
-      
-    }
-
+      let driverPh = driver && driver.phoneNo? driver.phoneNo : "phone notfound";
+      setFormData((prev) => ({
+        ...prev,
+        driverPh:driverPh
    
+      })); 
+    },[driverName])
   
-  };
-  const bookingdetailsInput = [
-    { id: "driver", label: "Driver Name", placeholder: "Driver Name", type: "text", required: true, name: "driver" },
-    { id: "vehicle", label: "Vehicle No", placeholder: "Vehicle No", type: "text", required: true, name: "vehicle" },
-    { id: "vehicleType", label: "Vehicle Type", placeholder: "vehicleType", type: "text", required: true, name: "vehicleType" },
-
-    {
-      id: "vendor",
-      label: "Vendor",
-      type: "select",
-      required: true,
-      name: "vendorName",
-      options: options, // Use the dynamically updated options
-    },
-    { id: "reportingTime", label: "Reporting Time", placeholder: "Reporting Time", type: "time", required: true, name: "reportingTime" },
-    { id: "company", label: "Company", placeholder: "Company", type: "select", required: true, name: "company",options: CompanyOptions, },
-    { id: "category", label: "Category", placeholder: "Category", type: "select", required: true, name: "category",options: cateogryOptions, },
-    { id: "bookedBy", label: "Booked By", placeholder: "Booked By", type: "text", required: true, name: "bookedBy"  },
-
-
-  ];
-
-  const passengerInput = [
-    { id: "passengerName", label: "Passenger Name", placeholder: "Enter passenger name", type: "text", required: true, name: "passengerName" },
-    { id: "passengerPhoneNumber", label: "Phone Number", placeholder: "Phone Number", type: "number", required: true, name: "passengerPhoneNumber" },
-  ];
-
-  const reportingInput = [
-    { id: "reportingAddress", label: "Reporting Address", placeholder: "Reporting Address", type: "text", required: true, name: "reportingAddress" },
-    { id: "dropAddress", label: "Drop Address", placeholder: "Drop Address", type: "text", required: true, name: "dropAddress" },
-  ];
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+      /* this is the  method  to get the customer Ph */
+    useEffect(()=>{
   
-    if (name === "vehicle") {
-      setSearch(value); // Update search query for vehicle auto-suggestions
+      const  found= customer.find((d)=> d.customerName === data.customer)
+
+         let customerPh = found && found.phoneNo? found.phoneNo : "phone notfound";
+         setFormData((prev) => ({
+           ...prev,
+           customerPh:customerPh || ""
+      
+         })); 
+  
+      console.log(" this is the  method inside the useeffect to get customer phone nubmber ",customerPh);
+  
+       },[data.customer])
+     
+  
+    //  Handles the autocomplete of vehicle details 
+    const handleDataAuto = (vehicle) => {
+      const { vehicleNo, vehicleType, vendor, drivers } = vehicle;
+      
+      const vendorName = vendor?.vendorName || ""; // Handle cases where vendor might be null
+    
+      setSearch(vehicleNo);
+      setVehicles([]);
+      setDrivers(drivers);
+    
       setFormData((prev) => ({
         ...prev,
-        [name]: value,
+        vehicleType: vehicleType || "",
+        vehicle: vehicleNo || "",
+        vendorName: vendorName, // ✅ Cleaner vendorName assignment
       }));
-    } else if (name === "passengerPhoneNumber") {
-      // Only allow digits and limit to 10
-      const formattedValue = value.replace(/\D/g, "").slice(0, 10);
-      setFormData((prev) => ({
-        ...prev,
-        [name]: formattedValue,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+    };
+    
   
+     const  handleCompanyAutoFill=(company)=>{    
+      setSearchCompany(company.companyName);
+  
+      console.log(" this is the comapany customers " ,company.customers);
+      
+      setCustomer(company.customers)
+      setCompanies([])
+     
+      console.log(" this is the selected company" ,company);
+      
+      setFormData((prev)=>({
+        ...prev,
+        company:company.companyName || ""
+      }))
+     }
 
-   // Function to copy the generated link to clipboard
+      // Function to copy the generated link to clipboard
    const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedLink)
       .then(() => {
@@ -227,6 +233,7 @@ const TripSheetForm = ({method}) => {
         alert("Failed to copy link: " + err);
       });
   };
+  
   // https://web.whatsapp.com/
   const shareOnWhatsApp = () => {
     const generatedLink = 'Your message or link here'; // Example: 'Check out this amazing link!'
@@ -244,86 +251,137 @@ const TripSheetForm = ({method}) => {
     }
   };
   
-  
-  // Handle AC/Non-AC selection
-  const handleAcTypeChange = (e) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      acType: e.target.value,
-    }));
-  };
+  const generateLink = async () => {
+    console.log(" this is the  request data ",data);
+    try {
+      const res = await LocalClient.post("/generate-link", data);
+      const link = `${window.location.origin}/driver-form?formId=${res.data.data.formId}`;
+      console.log(" this is the responce ",res);
+     
+      setGeneratedLink(link);
 
+
+      if (res.status===201) {
+       toast.success(" TripSheet Created ")
+        setSearch("")
+        setSearchCompany("")
+       setFormData({
+        driver: "",
+        driverPh: "",
+        vendorName: "",
+        vehicle: "",
+        vehicleType: "",
+        company:"",
+        customer:"",
+        customerPh: "",
+        reportingAddress: "",
+        dropAddress: "",
+        acType: "",
+        reportingTime: "",
+      })
+      }
+    } catch (error) {
+
+      console.log(" An error occured ",error);
+      
+      
+    }}
+
+   const handleNavigarion=()=>{
+    navigate("/tripsheet-list")
+  }
   return (
-    <div>
-      <div className='flex justify-between p-2 '> 
-      <h2 className="text-2xl text-blue-800 font-bold mb-5">Create Trip Sheet</h2>
-      <button className="rounded-lg bg-red-600 px-4  text-white"  onClick={method}>
-          Close
+<>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <Truck className="text-white" size={24} />
+          <h2 className="text-2xl text-white font-bold">Create Trip Sheet</h2>
+        </div>
+        <button 
+          onClick={handleNavigarion}
+          className="p-2 hover:bg-blue-600 rounded-full transition-colors"
+        >
+          <X className="text-white" size={20} />
         </button>
       </div>
-     
 
-      <div className="grid grid-cols-4   gap-5">
-      <div className="relative w-full">
-      {/* Search Input Field */}
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search Vehicle No..."
-        className="border p-2 w-full rounded"
-      />
+      <div className="p-6 space-y-6">
+        {/* Vehicle Search Section */}
+        <div className="relative">
+          <div className="relative">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search Vehicle Number..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          </div>
 
-      {/* Show Loading Indicator */}
-      {loading && <p className="text-gray-500 mt-1">Loading...</p>}
+          {loading && (
+            <div className="absolute z-20 inset-0 bg-white/80 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          )}
 
-      {/* Suggestions Dropdown */}
-      {vehicles.length > 0 && (
-        <ul className="absolute z-10 bg-white border shadow-md w-full mt-1 max-h-60 overflow-y-auto rounded">
-          {vehicles.map((vehicle) => (
-            <li
-              key={vehicle.id}
-              onClick={() => {
-                setSelectedVehicle(vehicle)
-                setSearch(vehicle.vehicleNo); // Auto-fill input
-                // setVehicles([]); // Hide dropdown
-              }}
-              className="cursor-pointer p-2 hover:bg-gray-200"
-            >
-              {vehicle.vehicleNo}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+          {vehicles.length > 0 && (
+            <ul className="absolute z-10 bg-white border border-gray-200 shadow-lg rounded-lg w-full mt-1 max-h-60 overflow-y-auto">
+              {vehicles.map((vehicle) => (
+                <li
+                  key={vehicle.id}
+                  onClick={() => handleDataAuto(vehicle)}
+                  className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+                >
+                  <Truck size={16} className="text-gray-500" />
+                  <span>{vehicle.vehicleNo}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-    {bookingdetailsInput.map((input, index) => {
-  return (
-    <input
-    key={index}
-    type={input.type}
-    value={""}
-    onChange={handleInputChange}
-    placeholder={input.placeholder}
-    className="border p-2 w-full rounded"
-  />
-    
-  );
-})}
-
-      </div>
-
-
-
-
-
-
-
-
-
-      {/* AC / Non-AC Selection */}
+        {/* Vehicle Details Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Truck className="text-blue-600" size={20} />
+            <h3 className="text-lg font-semibold text-gray-800">Vehicle Details</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4 gap-4">
+            {vehicleDetailsInput.map((input, index) =>
+              input.type !== "select" ? (
+                <div key={index} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">{input.label}</label>
+                  <input
+                    name={input.name}
+                    type={input.type}
+                    placeholder={input.label}
+                    value={data[input.name] || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              ) : (
+                <div key={index} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">{input.label}</label>
+                  <select
+                    name={input.name}
+                    value={data[input.name] || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {input.options.map((option, idx) => (
+                      <option key={idx} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
+            )}
+             {/* AC / Non-AC Selection */}
       <div className="mt-5">
-        <label className="block text-gray-700 font-bold mb-2">Select AC Type:</label>
         <div className="flex gap-5">
           <label className="flex items-center">
               <input
@@ -331,7 +389,7 @@ const TripSheetForm = ({method}) => {
                 name="acType"
                 value="AC"
                 checked={data.acType === "AC"}
-                onChange={handleAcTypeChange}
+                onChange={handleInputChange}
                 className="mr-2"
               />
               AC
@@ -342,58 +400,164 @@ const TripSheetForm = ({method}) => {
                 name="acType"
                 value="NonAC"
                 checked={data.acType === "NonAC"}
-                onChange={handleAcTypeChange}
+                onChange={handleInputChange}
                 className="mr-2"
               />
               Non-AC
             </label>
         </div>
       </div>
-
-      {/* Button at the Bottom */}
-      <div className="mt-5">
-        <button className="rounded-lg bg-green-600 px-4 py-2 text-white" onClick={generateLink}>
-          Generate Trip Link
-        </button>
-      </div>
-
-      {generatedLink && (
-        <div className="mt-3">
-          <p>
-            Share this link with the driver:
-            <a href={generatedLink} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">
-              {generatedLink}
-            </a>
-          </p>
-          <div className="flex gap-5 mt-3">
-            {/* Copy Button */}
-            <button
-              className="rounded-lg bg-gray-600 text-white px-4 py-2"
-              onClick={copyToClipboard}
-            >
-              Copy Link
-            </button>
-
-            {/* Share on WhatsApp Button */}
-            <button
-              className="rounded-lg bg-green-600 text-white px-4 py-2"
-              onClick={shareOnWhatsApp}
-            >
-              Share on WhatsApp
-            </button>
-            <button
-        className="rounded-lg bg-red-600 text-white px-4 py-2"
-        onClick={() => setGeneratedLink('')}
-      >
-        Clear URL
-      </button>
-      
           </div>
         </div>
-      )}
+
+        {/* Company Search Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="text-blue-600" size={20} />
+            <h3 className="text-lg font-semibold text-gray-800">Company Details</h3>
+          </div>
+          <div className="relative">
+            <input
+              name="company"
+              type="text"
+              value={searchCompany}
+              onChange={(e) => setSearchCompany(e.target.value)}
+              placeholder="Search Company..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+
+            {companys.length > 0 && (
+              <ul className="absolute z-10 bg-white border border-gray-200 shadow-lg rounded-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {companys.map((company) => (
+                  <li
+                    key={company.id}
+                    onClick={() => handleCompanyAutoFill(company)}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+                  >
+                    <Building2 size={16} className="text-gray-500" />
+                    <span>{company.companyName}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Passenger Details Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="text-blue-600" size={20} />
+            <h3 className="text-lg font-semibold text-gray-800">Passenger Details</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {passengerInput.map((input, index) =>
+              input.type !== "select" ? (
+                <div key={index} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">{input.label}</label>
+                  <input
+                    name={input.name}
+                    type={input.type}
+                    placeholder={input.placeholder}
+                    value={data[input.name] || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              ) : (
+                <div key={index} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">{input.label}</label>
+                  <select
+                    name={input.name}
+                    value={data[input.name] || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {input.options.map((option, idx) => (
+                      <option key={idx} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Submit Button */}
+  {/* Submit Button Section - Modified */}
+<div className="flex justify-end pt-4">
+  {!generatedLink ? (
+    <div className="mt-5">
+      <button 
+        className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors"
+        onClick={generateLink}
+      >
+        Generate Trip Link
+      </button>
     </div>
+  ) : (
+    <div className="space-y-3 w-full max-w-2xl text-right">
+      <p className="text-sm text-gray-600">
+        Share this link with the driver:{" "}
+        <a 
+          href={generatedLink} 
+          className="text-blue-600 underline break-all"
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
+          {generatedLink}
+        </a>
+      </p>
+      <div className="flex gap-3 justify-end">
+        <button
+          className="rounded-lg bg-gray-600 text-white px-4 py-2 hover:bg-gray-700 transition-colors"
+          onClick={copyToClipboard}
+        >
+          Copy Link
+        </button>
+        <button
+          className="rounded-lg bg-green-600 text-white px-4 py-2 hover:bg-green-700 transition-colors"
+          onClick={shareOnWhatsApp}
+        >
+          Share on WhatsApp
+        </button>
+        <button
+          className="rounded-lg bg-red-600 text-white px-4 py-2 hover:bg-red-700 transition-colors"
+          onClick={() => setGeneratedLink('')}
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+      </div>
+  </>
   );
 };
 
 export default TripSheetForm;
 
+
+
+
+const fetchCategory = async () => {
+  try {
+    const response = await LocalClient.get("fetchCategory");
+    if (response.status === 200) {
+      const formattedCategories = response.data.map((category) => ({
+        value: category.id, // Use id for value
+        label: category.name, // Use name for label
+      }));
+      setCategoryOptions(formattedCategories);
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
+};
+
+useEffect(() => {
+  fetchCategory();
+}, []);

@@ -5,7 +5,8 @@ import { ROLES } from '../utils/auth';
 import { 
   Users, Truck, Calendar, Building2, 
   LayoutDashboard, LogOut, 
-  PersonStanding
+  PersonStanding,
+  CassetteTape
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -21,13 +22,19 @@ const Sidebar = () => {
       path: '/dashboard',
       name: 'Dashboard',
       icon: LayoutDashboard,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ]
     },
     {
       path: '/manage-admins',
       name: 'Admins',
       icon: PersonStanding,
       roles: [ROLES.SUPER_ADMIN]
+    },
+    {
+      path: '/manage-category',
+      name: 'Category',
+      icon: CassetteTape,
+      roles: [ROLES.SUPER_ADMIN,ROLES.ADMIN,]
     },
     {
       path: '/clients',
@@ -39,10 +46,10 @@ const Sidebar = () => {
       path: '/driver',
       name: 'Driver',
       icon: Truck,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN,]
     },
     {
-      path: '/tripsheets',
+      path: '/tripsheet-list',
       name: 'TripSheet',
       icon: Calendar,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
@@ -51,7 +58,7 @@ const Sidebar = () => {
       path: '/vendors',
       name: 'Vendors',
       icon: Building2,
-      roles: [ROLES.SUPER_ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     }
   ];
 

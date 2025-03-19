@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import TripSheetPDF, { downloadPDF } from "./DownloadPdf";
-import { CheckCircle2, Download, XCircle, Edit2, X } from "lucide-react";
+import { CheckCircle2,  XCircle, Edit2, X, Eye } from "lucide-react";
 import SignaturePad from "react-signature-canvas";
 import { imageUrl, LocalClient } from "../Api/API_Client";
 import { toast } from "react-toastify";
+
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 
 // Move getRatingLabel outside the component to make it globally accessible in this file
 const getRatingLabel = (rating) => {
@@ -19,7 +22,8 @@ const getRatingLabel = (rating) => {
 };
 
 
-const TripDetails = ({ selectedTrip, goBack }) => {
+const TripDetails = ({ selectedTrip, goBack ,updateTrip}) => {
+  
   const [trip, setTrip] = useState(selectedTrip || {});
   const [editingFields, setEditingFields] = useState({});
   const [editedValues, setEditedValues] = useState({});
@@ -34,7 +38,15 @@ const TripDetails = ({ selectedTrip, goBack }) => {
         date.getMonth() + 1
       ).padStart(2, "0")}/${date.getFullYear()}`
     : "";
-  
+   
+    const { user } = useAuth();
+    const userRole = user?.role || " ";
+    const isStatusUpdated = selectedTrip.edit; // Example condition
+    // Store `canEdit` in state so it can be accessed anywhere
+    const [canEdit,setCanEdit] =  useState(userRole === "SUPER_ADMIN" || (userRole === "ADMIN" && !isStatusUpdated))
+    
+    
+
   console.log("this is the formatted date", formattedDate);
 
   useEffect(() => {
@@ -85,24 +97,25 @@ const TripDetails = ({ selectedTrip, goBack }) => {
           return;
         }
       }
+   const data ={formId: trip.formId,
+                 fieldName: key,
+                 fieldValue: value,
+                 previousValues,
+                 tripid:trip.id,
+                 userName:user.name
+              }
 
-      console.log("Saving field:", {
-        formId: trip.formId,
-        fieldName: key,
-        fieldValue: value,
-        
-      });
+      console.log("Saving field:", data);
 
-      const response = await LocalClient.patch("editField", {
-        formId: trip.formId,
-        fieldName: key,
-        fieldValue: value,
-      });
+      const response = await LocalClient.patch("editField", data);
 
       if (response.status === 200) {
         console.log("Response:", response.data);
         toast.success(`${key} updated successfully!`);
+        const updatedTrip = { ...selectedTrip, [key]: value };
 
+        // 🔥 Call `updateTrip` to update the trips list in the parent
+        updateTrip(updatedTrip);
         // ✅ Update state
         setTrip((prev) => ({ ...prev, [key]: value }));
         setEditingFields((prev) => ({ ...prev, [key]: false }));
@@ -127,11 +140,19 @@ const TripDetails = ({ selectedTrip, goBack }) => {
       });
 
       if (response.status === 200) {
+        setCanEdit(false)
         setTrip((prev) => ({ ...prev, status }));
-        alert(`Trip status updated to ${status}`);
+        const updatedTrip = { 
+          ...selectedTrip, 
+          ["status"]: status,         // First dynamic field update
+          ["edit"]: true // Second dynamic field update
+        };
+        updateTrip(updatedTrip)
+        
+        toast.success(`Trip status updated to ${status}`);
       }
     } catch (error) {
-      alert("Error updating status");
+      toast.error("Error updating status");
       console.error(error);
     }
   };
@@ -161,13 +182,34 @@ const TripDetails = ({ selectedTrip, goBack }) => {
     { label: "Tool", key: "toolCharges" },
     { label: "Total Hr", key: "totalHr" },
     { label: "Total Km", key: "totalKm" },
-    { label: "Ac Type", key: "acType" },
+    { label: "Ac Type", key: "acType" },  
   ];
 
-  const handleDownload = () => {
-    downloadPDF();
-  };
+  const navigate = useNavigate();
 
+  //       const handleViewReport=()=>{
+
+  //          // Convert trip object to query parameters
+  // const queryParams = new URLSearchParams(trip).toString();
+
+  // // Open the report page in a new tab with query parameters
+  // window.open(`/duty-slip?${queryParams}`, '_blank');
+          
+  //         // console.log(" this is the data sending from the parent " ,trip);
+          
+  //         // navigate('/duty-slip', { state: {trip} }); // Pass data to report page
+  //       }
+
+  const handleViewReport = () => {
+    console.log("This is the data sending from the parent:", trip);
+  
+    // Convert trip object to query parameters
+    const queryParams = new URLSearchParams(trip).toString();
+  
+    // Open the report page in a new tab with query parameters
+    window.open(`/duty-slip?${queryParams}`, '_blank');
+  };
+  
   const handleSaveSignature = async (type) => {
     const signatureRef = type === "driver" ? driverSignatureRef : guestSignatureRef;
     if (signatureRef.current.isEmpty()) {
@@ -221,12 +263,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
 
   const renderEditableField = (key, label, type = "input") => {
 
-    const userRole= "SUPER_ADMIN";
     const isEditing = editingFields[key];
-    const isStatusUpdated= true;
-    const canEdit = 
-      userRole === "SUPER_ADMIN" || // SUPER_ADMIN can always edit
-      (userRole === "ADMIN" && !isStatusUpdated); // ADMIN can edit only
    
     return (
       <div className="bg-gray-50 p-3 rounded-lg" key={key}>
@@ -286,10 +323,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
 
   return (
     <div className="bg-white h-[calc(100vh-100px)] p-6 rounded-lg shadow-lg overflow-y-auto">
-      <div className="hidden">
-        <TripSheetPDF selectedTrip={trip} formattedDate={formattedDate} />
-      </div>
-
+    
       {showGuestModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-lg">
@@ -350,7 +384,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
         {/* Basic Details */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {fieldsToShow.map(({ label, key }) => renderEditableField(key, label))}
-          {renderEditableField("review", "Customer Review")} {/* Add review field */}
+         
         </div>
 
         {/* Address Fields */}
@@ -388,12 +422,14 @@ const TripDetails = ({ selectedTrip, goBack }) => {
                 alt="Guest Signature"
                 className="w-full h-40 object-contain border rounded-lg bg-white"
               />
-              <button
+              {canEdit?<button
                 onClick={() => setShowGuestModal(true)}
                 className="absolute bottom-2 right-2 bg-white/90 text-gray-700 px-3 py-1 rounded-md text-sm hover:bg-white transition-colors"
               >
                 Edit
-              </button>
+              </button>:null
+              }
+              
             </div>
           </div>
 
@@ -401,13 +437,13 @@ const TripDetails = ({ selectedTrip, goBack }) => {
           <div className="bg-gray-50 p-4 rounded-lg flex flex-col gap-3">
             <h3 className="font-medium text-gray-700 mb-2">Actions</h3>
             <button
-              onClick={handleDownload}
-              className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Download size={18} />
-              Download PDF
-            </button>
-            <button
+            onClick={handleViewReport}
+            className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Eye size={18} />
+            View Report
+          </button>
+         {canEdit?( <><button
               onClick={() => handleUpdateStatus("Approved")}
               className="flex items-center justify-center gap-2 w-full bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors"
             >
@@ -420,7 +456,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
             >
               <XCircle size={18} />
               Reject
-            </button>
+            </button></>):null}
           </div>
         </div>
       </div>

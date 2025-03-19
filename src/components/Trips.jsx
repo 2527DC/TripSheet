@@ -28,7 +28,7 @@ const TripList = ({ trips = [], selectedTrip, setSelectedTrip }) => {
                 } border`}
               >
                 <div>
-                  <p className="font-medium">{trip.destination}</p>
+
                   <p className="text-sm text-gray-500">{formattedDate}</p>
                 </div>
                 <p className="text-sm text-gray-500">{trip.status}</p>

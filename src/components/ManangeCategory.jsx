@@ -1,82 +1,55 @@
 import { Plus } from 'lucide-react';
-import React, { useState } from 'react';
-import { InputFields } from '../SmallComponents';
+import React, { useState, useEffect } from 'react';
+import { InputField, Modal } from './SmallComponents';
 import { LocalClient } from '../Api/API_Client';
+import { API } from '../Api/Endpoints';
+import { toast } from 'react-toastify';
 
 const ManageCategory = () => {
-  const [create, setCreate] = useState(false);
-  const [data, setFormData] = useState({
-   category:""
-  });
+  const [isOpen, setIsOpen] = useState(false);
+  const [data, setFormData] = useState({ category: "" });
+  const [categories, setCategories] = useState([]); // State for category list
 
-  const handleAddDriver = () => {
-    setCreate((prev) => !prev);
-  };
+  // Fetch categories when component mounts
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const DriverdetailsInput = [
-    { id: "category", label: "Category Name ", placeholder: "Category Name", type: "text", required: true, name: "category" }
-   
-  ];
-
-  const handleInputChange = (e) => {
-    const { name, type, value } = e.target;
-    if (name === 'phNumber') {
-      // Only allow digits and limit to 10
-      const formattedValue = value.replace(/\D/g, '').slice(0, 10); // Remove non-digits and slice to 10 digits
-      setFormData((prevState) => ({
-        ...prevState,
-        [name]: formattedValue
-      }));
-    } else {
-      setFormData((prevState) => ({
-        ...prevState,
-        [name]: value
-      }));
+  const fetchCategories = async () => {
+    try {
+      const response = await LocalClient.get(API.getCategory); // Adjust endpoint as needed
+      if (response.status === 200) {
+        setCategories(response.data || []); // Adjust based on API response structure
+      }
+    } catch (error) {
+      toast.error('Failed to fetch categories');
+      console.log("Error fetching categories:", error);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    if (!data.category.trim()) {
+      alert("Category cannot be empty!");
+      return;
+    }
 
     try {
-      console.log(" thsi sis the request data ",data);
-      
-      const response = await LocalClient.post("createCategory", data);
-      console.log(" this is the responce ",response);
-
-      if (response.status ===201) {
-
-        console.log(" statement inside the ");
-        
-        alert(response.data.message); // Success message
-        setCreate(false); // Close form after submission
-        setFormData({
-          companyName: "",
-          
-        }); // Reset the form data
-      }
-       else {
-        alert(response.data.message); // Show error message from response
+      const response = await LocalClient.post(API.createCategory, data);
+      if (response.status === 201) {
+        toast.success("Category created");
+        fetchCategories(); // Refresh category list
+        setIsOpen(false);
+        setFormData({ category: "" }); // Reset form
       }
     } catch (error) {
-      if (error.response) {
-        // Server responded with a status code outside of the 2xx range
-        if (error.response.status === 404) {
-          alert('User not found. Please check your credentials.');
-        } else if (error.response.status === 401) {
-          alert('Incorrect password. Please try again.');
-        } else {
-          alert('error: ' + error.response.data.message);
-        }
-      } else if (error.request) {
-        // No response was received from the server
-        alert('No response from the server. Please check your network connection.');
-      } else {
-        // Something else caused the error
-        alert('An error occurred while logging in.');
-      }
-      console.log(" this is the error " ,error);
-      
+      toast.error("Something went wrong");
+      console.log("Error:", error);
     }
   };
 
@@ -87,49 +60,71 @@ const ManageCategory = () => {
           <h2 className="text-lg font-semibold">Manage Category</h2>
           <button
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            onClick={handleAddDriver}
+            onClick={() => setIsOpen(true)}
           >
             <Plus size={18} />
             Add Category
           </button>
         </div>
+
+        {/* Category List */}
+        <div className="mt-6">
+          <h3 className="text-md font-medium mb-2">Category List</h3>
+          {categories.length > 0 ? (
+            <div className="max-h-96 overflow-y-auto"> {/* Max height and scroll */}
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10"> {/* Sticky header */}
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category Name
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {categories.map((category, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {category.name}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500">No categories found.</p>
+          )}
+        </div>
       </div>
 
-      {/* Render the form when create is true */}
-      {create && (
-        <div className="mt-4 bg-gray-100 p-4 rounded-lg">
-          <h3 className="text-xl font-semibold mb-4">Add New Category</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="flex grid-cols-3 gap-4">
-              {/* {DriverdetailsInput.map((input, index) => (
-                <
-                
-                  key={index}
-                  {...input}
-                  value={data[input.name] || ""}
-                  onChange={handleInputChange}
-                />
-              ))} */}
-            </div>
-
-            <div className="flex gap-3 mt-4">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Submit
-              </button>
-              <button
-                type="button"
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                onClick={() => setCreate(false)} // Close form
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Add Category">
+        <form onSubmit={handleCategorySubmit}>
+          <InputField
+            label="Category"
+            type="text"
+            name="category"
+            value={data.category}
+            onChange={handleInputChange}
+            placeholder="Enter Category"
+            required
+          />
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

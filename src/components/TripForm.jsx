@@ -1,99 +1,254 @@
 import { useEffect, useState } from "react";
 import { TripList } from "./Trips";
-import { FileSpreadsheet, History, Plus, Search, Truck } from "lucide-react";
+import { CheckCircle, Clock, FileSpreadsheet, History, Plus, Search, Truck, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LocalClient } from "../Api/API_Client";
 import TripDetails from "./TripDetails";
 import handleDownloadExcel from "./DownloadExcel";
 import { useAuth } from "../context/AuthContext";
+import { Modal } from "./SmallComponents";
+import { toast } from "react-toastify";
+import { API } from "../Api/Endpoints";
 
 function TripForm() {
   const [toDate, setToDate] = useState("");
   const [fromDate, setFromDate] = useState("");
-  const [vendors, setVendors] = useState([]);
-  const [selectedVendor, setSelectedVendor] = useState("");
   const [trips, setTrips] = useState([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [vendorLoading, setVendorLoading] = useState(false);
   const[selectedTrip,setSelectedTrip]=useState()
   const navigate = useNavigate();
+ const [auditLogs,setAuditLogs]=useState([])
+ const [isOpen, setIsOpen] = useState(false);
+ const typeOptions = ["Driver", "Customer", "Company", "Vendor"];
+ const statusOptions = ["All", "Approved", "Pending", "Rejected"];
+ const [selectedType, setSelectedType] = useState("");
+ const [selectedStatus, setSelectedStatus] = useState("");
+ const [searchQuery, setSearchQuery] = useState("");
+ const [selectedSearch, setSelectedSearch] = useState("");
+ const [suggestions, setSuggestions] = useState([]);
+ const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { user } = useAuth()
 
   console.log(" this is the user " ,user);
   
+  console.log(" this is the selected type" ,selectedType);
   
-  const getTripList = async () => {
-    try {
-      setLoading(true);
-      const params = {
-        vendorName: selectedVendor,
-        fromDate: fromDate,
-        toDate: toDate
-      };
+  
 
-      
-      const response = await LocalClient.get("/trips", { params });
-      if (response.status === 200) {
-        console.log(" this is the responce " ,response.data);
-        
-        setTrips(response.data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching trips:", error);
-    } finally {
-      setLoading(false);
-    }
+  const updateTrip = (updatedTrip) => {
+    setTrips((prevTrips) =>
+      prevTrips.map((trip) =>
+        trip.id === updatedTrip.id ? updatedTrip : trip
+      )
+    );
   };
+// Separate validation function with advanced syntax
+const validateTripInputs = ({ searchQuery, fromDate, toDate, selectedType }) => {
+  const errors = [];
+
+  // Check required fields with short-circuit evaluation
+  !searchQuery?.trim() && errors.push('Search Query is required');
+  !fromDate && errors.push('From Date is required');
+  !toDate && errors.push('To Date is required');
+  !selectedType?.trim() && errors.push('Type is required');
+
+  // Early return if required fields are missing
+  if (errors.length) {
+    console.error('Missing required parameters:', errors);
+    toast.error(errors.join(', '));
+    return false;
+  }
+
+  // Date validation with modern Date API
+  const fromDateObj = new Date(fromDate);
+  const toDateObj = new Date(toDate);
+  const today = new Date().setHours(23, 59, 59, 999);
+
+  // Use object literal for validation checks
+  const dateChecks = {
+    'Invalid From Date': isNaN(fromDateObj.getTime()),
+    'Invalid To Date': isNaN(toDateObj.getTime()),
+    'From Date after To Date': fromDateObj > toDateObj,
+    'To Date in future': toDateObj > today,
+  };
+
+  // Filter failed checks and map to error messages
+  const dateErrors = Object.entries(dateChecks)
+    .filter(([, isInvalid]) => isInvalid)
+    .map(([message]) => message);
+
+  if (dateErrors.length) {
+    console.error('Date validation failed:', dateErrors);
+    dateErrors.forEach((error) => toast.error(`${error}. Please check your dates (e.g., YYYY-MM-DD)`));
+    return false;
+  }
+
+  return true;
+};
+
+// Optimized getTripList function
+const getTripList = async () => {
+  const inputs = { searchQuery, fromDate, toDate, selectedType };
+
+  // Validate inputs and exit if invalid
+  if (!validateTripInputs(inputs)) {
+    console.log('Validation failed, skipping API request');
+    return;
+  }
+
+  try {
+    // Log structured data with template literals
+    console.log(`Fetching trip sheets: ${JSON.stringify({ ...inputs, selectedStatus })}`);
+
+    // Build query parameters with object destructuring and nullish coalescing
+    const params = new URLSearchParams({
+      searchQuery: searchQuery.trim(),
+      fromDate,
+      toDate,
+      selectedStatus: selectedStatus ?? 'All',
+      selectedType: selectedType.trim(),
+    });
+
+    // Make API request
+    const { data: { message, data } } = await LocalClient.get('trips', { params });
+
+    // Update state and show success toast
+    setTrips(data);
+    toast.success(`Fetched ${data.length} Trips`);
+    console.log(`API Response: ${message}`, { total: data.length });
+  } catch (error) {
+    // Optimized error handling with nullish coalescing
+    const errorMessage = error.response?.data?.message ?? error.message ?? 'Failed to fetch trip sheets';
+    console.error(`Error fetching trip sheets: ${errorMessage}`, error);
+    !toast.isActive('error') && toast.error(errorMessage === 'Failed to fetch trip sheets' ? 'Error Fetching Details' : errorMessage);
+  }
+};
 
   const handleNewClick = () => {
     navigate("/tripsheets");
   };
 
+
   useEffect(() => {
-    console.log(" this is the selected vendor ",selectedVendor);
-    
-    const fetchVendors = async () => {
-      if (search.length < 2 ||selectedVendor===search) {
-        setVendors([]);
-        return;
-      }
-      
+
+    if (searchQuery.length < 2 || selectedSearch === searchQuery) {
+      setSuggestions([]);
+      return;
+    }
+    // Define the async search function
+    const handleSearch = async () => {
+     
       try {
-        setVendorLoading(true);
-        const response = await LocalClient.get(`searchVendor?search=${search}`);
-        if (response.status === 200) {
-          setVendors(response.data);
-        }
+        const response = await LocalClient.get(`search?type=${selectedType}&query=${searchQuery}`);
+        console.log("This is the response:", response.data);
+        setSuggestions(response.data); // Uncommented to update suggestions
+        setShowSuggestions(true);
       } catch (error) {
-        console.error("Error fetching vendors:", error);
-        setVendors([]);
-      } finally {
-        setVendorLoading(false);
+        console.error("Error fetching suggestions:", error);
+        setSuggestions([]); // Clear suggestions on error
+        setShowSuggestions(false);
       }
     };
-
-    const debounceTimer = setTimeout(fetchVendors, 300);
+  
+    // Debounce the search
+    const debounceTimer = setTimeout(() => {
+      handleSearch();
+    }, 300);
+  
+    // Cleanup: clear the timeout when searchQuery changes or component unmounts
     return () => clearTimeout(debounceTimer);
-  }, [search]);
+  }, [searchQuery, selectedType, selectedSearch]); // Added all dependencies
+  
 
-  const handleVendorSelect = (vendor) => {
-    setSelectedVendor(vendor.vendorName);
-    setSearch(vendor.vendorName);
-    setVendors([]);
-  };
+ const handleSelectSuggestion = (name) => {
+  console.log(" this is ythe selcted search " ,name);
+   setSearchQuery(name)
+setSelectedSearch(name)
+setSuggestions([])
+ };
+
+
+
+
+  // handleDownloadExcel(selectedTrip)
+
     const handleDownload=async()=>{
 
         handleDownloadExcel(trips)
 
     }
-  // handleDownloadExcel(selectedTrip)
-  console.log("Trips being passed to TripList:", trips, "Type:", typeof trips);
-    const handleHistory=()=>{
-    console.log(" history button clicked ");
+  
+ const handleHistory=async()=>{
+
+      try {
+        const response= await LocalClient.get("getLogs")
+      
+        if (response.status===200) {
+          setIsOpen(true)
+          console.log(" this is the Log responce " ,response.data);
+          
+         setAuditLogs(response.data) 
+        toast.success("Logs Fetched")
+        }
+       
+      } catch (error) {
+        toast.error("Failed To Fetch the Logs")
+      }
+     
+    
    }
   
+ 
+    const fetchedApprovedTrips= async ()=>{
+ 
+      try {
+
+        const  response=await LocalClient.get(API.approvedTrips)
+
+        if (response.status===200) {
+          toast.success(`Approved Trips Fetched ${response.data.approvedTrips.length}`)
+          setTrips(response.data.approvedTrips)
+        }
+        
+      } catch (error) {
+        console.log("ERROR ",error);
+        toast.error("SERVER IS BUSY")
+      }
+    }
+
+
+    const  fetchedPendingTrip=  async()=>{
+      try {
+        const  response=await LocalClient.get(API.pendingTrips)
+        if (response.status===200) {
+          toast.success(`Pending Trips Fetched ${response.data.pendingTrips.length}`)
+          setTrips(response.data.pendingTrips)
+        }
+      } catch (error) {
+        console.log("ERROR ",error);
+        toast.error("SERVER IS BUSY")
+      }
+   
+    }
+
+
+    const  fetchedRejectedTrip=async  ()=>{
+      try {
+           const  response=await LocalClient.get(API.rejectedTrips)
+        if (response.status===200) {
+          toast.success(`Rejected Trips Fetched ${response.data.rejectedTrips.length}`)
+          setTrips(response.data.rejectedTrips)
+        }
+      } catch (error) {
+        console.log("ERROR ",error);
+        toast.error("SERVER IS BUSY")
+      }
+    }
+
+ ;
+
+    
   return (<>
     {!selectedTrip?(
       <div className="container mx-auto p-4">
@@ -103,6 +258,32 @@ function TripForm() {
           Trip Sheets
         </h2>
         <div className="flex items-center gap-3">
+
+        <button
+        onClick={fetchedPendingTrip}
+        className="flex items-center gap-2 px-4 py-2 text-yellow-600 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+      >
+        <Clock size={20} />
+        Pending
+      </button>
+
+         <button
+        onClick={fetchedApprovedTrips}
+        className="flex items-center gap-2 px-4 py-2 text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+      >
+        <CheckCircle size={20} />
+        Approved
+      </button>
+
+    
+      <button
+        onClick={fetchedRejectedTrip}
+        className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+      >
+        <XCircle size={20} />
+        Rejected
+      </button>
+
          {
           user.role==="SUPER_ADMIN"?
           <button
@@ -131,78 +312,132 @@ function TripForm() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-          <div className="relative md:col-span-5">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search vendor..."
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              />
+{/*  this is the ui for the Filter SEARCH  */}
+      <div className="max-w-full mx-auto mb-3">
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+              {/* Type Dropdown */}
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) =>setSelectedType(e.target.value) }
+                  className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                >
+                  <option value="">All Types</option>
+                  {typeOptions.map((type, index) => (
+                    <option key={index} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Input */}
+              <div className="lg:col-span-3 relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  name="selectedsearch"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Search ${selectedType || "..."}`}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              {/* Dropdown Suggestions */}
+              {showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                  {suggestions.map((item, index) => (
+                    <li
+                      key={index}
+                      onClick={() => handleSelectSuggestion(item.name)}
+                      className="p-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                   {item.name}
+                   
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
-            {vendorLoading && (
-              <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+
+              {/* Status Dropdown */}
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                >
+                  <option value="">All Status</option>
+                  {statusOptions.map((status, index) => (
+                    <option key={index} value={status}>{status}</option>
+                  ))}
+                </select>
               </div>
-            )}
 
-            {vendors.length > 0 && (
-              <ul className="absolute z-10 w-full mt-2 bg-white rounded-lg shadow-xl max-h-60 overflow-y-auto border border-gray-100">
-                {vendors.map((vendor) => (
-                  <li
-                    key={vendor.id}
-                    onClick={() => handleVendorSelect(vendor)}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors"
-                  >
-                    <Truck size={18} className="text-gray-500" />
-                    <span className="text-gray-700">{vendor.vendorName}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+              {/* Date Range */}
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+              </div>
 
-          <div className="md:col-span-3">
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              placeholder="From Date"
-            />
-          </div>
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  min={fromDate}
+                  className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+              </div>
 
-          <div className="md:col-span-3">
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              min={fromDate}
-              className="w-full px-4 py-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-              placeholder="To Date"
-            />
-          </div>
-
-          <div className="md:col-span-1">
-            <button
-              onClick={getTripList}
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                <Search size={20} />
-              )}
-            </button>
-          </div>
+              {/* Search Button */}
+              <div className="lg:col-span-1 flex items-end">
+                <button
+                  onClick={getTripList}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                > <Search size={18} />
+                </button>
+              </div>
+            </div>
+        
         </div>
       </div>
+      {true?(<div>
+  
+        <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={"EDIT History"}>
+      {/* ✅ Make the history scrollable */}
+      <div className="max-h-[400px] overflow-y-auto p-4">
+        {auditLogs.map((log) => (
+          <div key={log.id} className="mb-2">
+                <p className="text-sm text-gray-700"> 
+                For <span className="font-semibold m-1"> TripSheetId  </span>  
+               <span className="font-semibold text-red-500 m-1">"{log.tripSheetId}"</span> 
+              <span className="font-semibold">{log.editedBy}</span> changed  
+              <span className="font-semibold"> {log.fieldName} </span> 
+              from "<span className="text-red-500">{log.oldValue}</span>" 
+              to "<span className="text-green-500">{log.newValue}</span>"  
+              on <span className="text-gray-500">{new Date(log.editedAt).toLocaleString()}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Modal>
+
+ 
+
+</div>):null}
 
       <div className="bg-white rounded-xl shadow-sm p-6">
         {loading ? (
@@ -214,7 +449,7 @@ function TripForm() {
         )}  
       </div>
     </div>
-    ):(<TripDetails   selectedTrip={ selectedTrip} goBack={()=>setSelectedTrip(false)}/>)
+    ):(<TripDetails   selectedTrip={ selectedTrip} goBack={()=>setSelectedTrip(false)} updateTrip={updateTrip} />)
 
     }
     </>

@@ -46,16 +46,20 @@ function ManageDrivers() {
     vehicleNo: '',
     vehicleId:""
   });
-  const [vehicleFormData, setVehicleFormData] = useState({
-    vehicleNo: '',
-    vehicleType: '',
-  });
+  
   const [search, setSearch] = useState('');
+  const [searchVendor, setSearchVendor] = useState("");
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
-
-
+  const [vendors, setVendors] = useState([]);
+  const [selectedVendor, setSelectedVendor] = useState("");
+  const [vendorLoading, setVendorLoading] = useState(false);
+  const [vehicleFormData, setVehicleFormData] = useState({
+    vehicleNo: '',
+    vehicleType: '',
+    vendorId :null,
+  });
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'phoneNo') {
@@ -74,12 +78,20 @@ function ManageDrivers() {
 
   const handleVehicleSubmit = async (e) => {
     e.preventDefault();
+
+    console.log(" this is the vehicle form datas",vehicleFormData);
+    
     try {
        
       const response =await LocalClient.post(CreatVehicle,vehicleFormData)
 
       if (response.status===201) {
         toast.success("Vehicle created successfully!");
+        console.log("this is the vehicle data submitted ",vehicleFormData);
+    
+        setIsVehicleModalOpen(false);
+        setVehicleFormData({ vehicleNo: '', vehicleType: '' ,vendorId:"" });
+    
       }
 
 
@@ -89,14 +101,26 @@ function ManageDrivers() {
       
     }
  
-    console.log("this is the vehicle data submitted ",vehicleFormData);
-    
-    setIsVehicleModalOpen(false);
-    setVehicleFormData({ vehicleNo: '', vehicleType: '' });
- 
-
-
+   
   };
+
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
+
+  const fetchDrivers = async () => {
+    try {
+      const response = await LocalClient.get("getDrivers"); // Adjust endpoint as per your API
+      if (response.status === 200) {
+        setDrivers  (response.data || []); // Adjust based on your API response structure
+        toast.success('Vendors Fetched Success');
+      }
+    } catch (error) {
+      toast.error('Failed to fetch vendors');
+      console.log("Error fetching vendors:", error);
+    }
+  };
+
 
 //  fetching the Vehicles by vehicle no 
 useEffect(() => {
@@ -110,9 +134,6 @@ useEffect(() => {
       const result = await LocalClient.get(`vehicle-list?search=${search}`);
 
       console.log("✅ Response Data:", result.data);
-
-  
-
       setVehicles(result.data);
     } catch (error) {
       console.error("❌ Error fetching vehicles:", error);
@@ -125,7 +146,37 @@ useEffect(() => {
 
   return () => clearTimeout(delayDebounce);
 }, [search]);
+// Fetch vendors with debounced search
+useEffect(() => {
+  console.log("This is the selected vendor:", selectedVendor);
 
+  const fetchVendors = async () => {
+    // Prevent API call if searchVendor is too short or the same as selectedVendor
+    if (searchVendor.length < 2 || selectedVendor === searchVendor) {
+      setVendors([]);
+      return;
+    }
+
+    try {
+      setVendorLoading(true);
+      const response = await LocalClient.get(`searchVendor?search=${searchVendor}`); // Use searchVendor correctly
+      if (response.status === 200) {
+        console.log("This is the vendor list:", response.data);
+        setVendors(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+      setVendors([]);
+    } finally {
+      setVendorLoading(false);
+    }
+  };
+
+  // Debounce API calls (prevents unnecessary requests)
+  const debounceTimer = setTimeout(fetchVendors, 300);
+  
+  return () => clearTimeout(debounceTimer);
+}, [searchVendor]); // Dependency array listens for changes in searchVendor only
 
   const handleVehicleSelect = (vehicle) => {
     console.log(" this is the vehicle selected " ,vehicle);
@@ -141,12 +192,22 @@ useEffect(() => {
   };
 
 
+  const  handleVendorSelect=(vendor)=>{
+    setSelectedVendor(vendor.name)
+    setSearchVendor(vendor.name);
+    setVehicleFormData((prev) => ({
+      ...prev,
+      vendorId: vendor.id,  // Example update
+    }));
+    
+    setVendors([]);
+  }
 
   const handleAddDriver= async (e) => {
     e.preventDefault();
   
     try {
-
+      console.log(" this is the request",  formData);
       // ✅ Send POST request using Axios
       const response = await LocalClient.post(CreateDriver, formData);
   console.log(" this is the responce", response);
@@ -285,31 +346,74 @@ useEffect(() => {
         </Modal>
 
         {/* Add Vehicle Modal */}
-        <Modal
-          isOpen={isVehicleModalOpen}
-          onClose={() => setIsVehicleModalOpen(false)}
-          title="Add Vehicle"
-        >
-          <form onSubmit={handleVehicleSubmit}>
-            <InputField
-              label="Vehicle Number"
-              type="text"
-              name="vehicleNo"
-              value={vehicleFormData.vehicleNo}
-              onChange={handleVehicleInputChange}
-              placeholder="Enter vehicle number"
-              required
-            />
-            <InputField
-              label="Vehicle Type"
-              type="text"
-              name="vehicleType"
-              value={vehicleFormData.vehicleType}
-              onChange={handleVehicleInputChange}
-              placeholder="Enter vehicle type"
-              required
-            />
-            <div className="flex justify-end gap-3 mt-6">
+       {/* Add Vehicle Modal */}
+<Modal
+  isOpen={isVehicleModalOpen}
+  onClose={() => setIsVehicleModalOpen(false)}
+  title="Add Vehicle"
+>
+  <form onSubmit={handleVehicleSubmit}>
+    {/* Vehicle Number Input */}
+    <InputField
+      label="Vehicle Number"
+      type="text"
+      name="vehicleNo"
+      value={vehicleFormData.vehicleNo}
+      onChange={handleVehicleInputChange}
+      placeholder="Enter vehicle number"
+      required
+    />
+
+    {/* Vehicle Type Input */}
+    <InputField
+      label="Vehicle Type"
+      type="text"
+      name="vehicleType"
+      value={vehicleFormData.vehicleType}
+      onChange={handleVehicleInputChange}
+      placeholder="Enter vehicle type"
+      required
+    />
+
+    {/* Search Vehicle Input */}
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Search Vendor
+    </label>
+    <div className="relative">
+      <input
+        type="text"
+        value={searchVendor}
+        onChange={(e) => setSearchVendor(e.target.value)}
+        placeholder="Search Vendor..."
+        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+
+      {/* Loading Indicator */}
+      {vendorLoading && (
+        <div className="absolute right-12 top-1/2 -translate-y-1/2">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+    </div>
+
+    {/* Vehicle Suggestions Dropdown */}
+    {vendors.length > 0 && (
+      <ul className="absolute z-50 bg-white border border-gray-300 shadow-lg rounded-lg w-[200px] mt-2 max-h-48 overflow-y-auto">
+        {vendors.map((vendor) => (
+          <li
+            key={vendor.id}
+            onClick={() => handleVendorSelect(vendor)}
+            className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center gap-2 transition"
+          >
+            <Truck size={18} className="text-gray-500" />
+            <span className="text-gray-700">{vendor.name}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+    
+         <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
                 onClick={() => setIsVehicleModalOpen(false)}
@@ -318,14 +422,15 @@ useEffect(() => {
                 Cancel
               </button>
               <button
-                type="submit"
+                 type='submit'
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Submit
+                Add Driver
               </button>
             </div>
-          </form>
-        </Modal>
+  </form>
+</Modal>
+
       </div>
 
         {/* Driver List */}
@@ -335,7 +440,7 @@ useEffect(() => {
               <div className="col-span-4">Driver Name</div>
               <div className="col-span-3">Phone Number</div>
               <div className="col-span-3">Vehicle Number</div>
-              <div className="col-span-2">Actions</div>
+            
             </div>
           </div>
           <div className="max-h-[400px] overflow-y-auto">
@@ -348,12 +453,10 @@ useEffect(() => {
                   className="p-3  hover:bg-gray-50 transition-colors"
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-4 font-medium">{driver.driverName}</div>
+                    <div className="col-span-4 font-medium">{driver.name}</div>
                     <div className="col-span-3">{driver.phoneNo}</div>
-                    <div className="col-span-3">{driver.vehicleNo}</div>
+                    <div className="col-span-3">{driver.vehicle.vehicleNo}</div>
                     <div className="col-span-2 flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-800">Edit</button>
-                      <button className="text-red-600 hover:text-red-800">Delete</button>
                     </div>
                   </div>
                 </div>

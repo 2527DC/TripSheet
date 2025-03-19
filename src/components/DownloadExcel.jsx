@@ -21,7 +21,7 @@ const handleDownloadExcel = (data) => {
 
   // Transform data to match the headers
   const formattedData = data.map((item) => [
-    item.drivername,
+    item.driverName,
     item.vehicleNo,
     item.customer,
     item.customerPh,
