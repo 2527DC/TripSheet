@@ -1,8 +1,9 @@
-import { Plus, Trash2, MoreVertical, Building2, Search, Users, Phone, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, MoreVertical, Building2, Search, Users, Phone, ArrowLeft, Edit, Settings } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { LocalClient } from "../Api/API_Client";
 import { InputField, Modal } from "./SmallComponents";
 import { toast } from "react-toastify";
+import { Companys } from "../Api/Endpoints";
 
 const ManageCompany = () => {
   const [create, setCreate] = useState(false);
@@ -13,7 +14,7 @@ const ManageCompany = () => {
   });
   const [customerData, setCustomerData] = useState({
     customerName: "",
-    phoneNumber: "",
+    phoneNo: "",
   });
   const [companies, setCompanies] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -24,7 +25,7 @@ const ManageCompany = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await LocalClient.get("getCompanies");
+        const response = await LocalClient.get(Companys);
         if (response.status === 200) {
           setCompanies(response.data);
         }
@@ -37,36 +38,52 @@ const ManageCompany = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedCompany) {
-      // Fetch customers for selected company
-      console.log("this is the selected company " ,selectedCompany);
-    
-      const fetchCustomers = async () => {
-        try {
-          const response = await LocalClient.get(`getCustomers/${selectedCompany.id}`);
-          console.log(" this is the customers  of the company " , response.data);
-          
-          if (response.status === 200) {
-            setCustomers(response.data.customers || []);
-          }
-        } catch (error) {
-          console.error("Error fetching customers:", error);
-          toast.error("Failed to fetch customers. Please try again.");
+    const fetchCustomers = async () => {
+      try {
+        if (!selectedCompany) {
+          toast.error("Please select a company first.");
+          return;
         }
-      };
+  
+        // Determine which parameter to use
+        let params = {};
+        if (selectedCompany.id) {
+          params.companyId = selectedCompany.id;
+        } else if (selectedCompany.companyName) {
+          params.companyName = selectedCompany.companyName;
+        } else {
+          toast.error("Invalid company selection.");
+          return;
+        }
+  
+        console.log("Fetching customers with params:", params);
+  
+        const response = await LocalClient.get("getCustomers", { params });
+  
+        if (response.status === 200) {
+          console.log("This is the customers of the company:", response.data);
+          setCustomers(response.data.customers || []);
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        toast.error("Failed to fetch customers. Please try again.");
+      }
+    };
+  
+    if (selectedCompany) {
       fetchCustomers();
     }
   }, [selectedCompany]);
-
+  
   const filteredCompanies = companies.filter(company =>
-    company.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+    company.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   console.log(" this is the customer",customers);
   
 
   const filteredCustomers = customers.filter(customer =>
-    customer.customerName.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+    customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
     customer.phoneNo.includes(customerSearchTerm)
   );
 
@@ -101,7 +118,7 @@ const ManageCompany = () => {
       label: "Phone Number",
       placeholder: "Enter phone number",
       type: "tel",
-      name: "phoneNumber",
+      name: "phoneNo",
     },
   ];
 
@@ -129,10 +146,12 @@ const ManageCompany = () => {
         toast.success(response.data.message);
         setCreate(false);
         setFormData({ companyName: "" });
-        const updatedResponse = await LocalClient.get("getCompanies");
-        if (updatedResponse.status === 200) {
-          setCompanies(updatedResponse.data);
-        }
+        setCompanies((prev) => [...prev, data]); // ✅ Correct for arrays
+
+        // const updatedResponse = await LocalClient.get("getCompanies");
+        // if (updatedResponse.status === 200) {
+        //   setCompanies(updatedResponse.data);
+        // }
       }
     } catch (error) {
       console.error("Error occurred:", error);
@@ -144,28 +163,40 @@ const ManageCompany = () => {
 
   const handleCustomerSubmit = async (e) => {
     e.preventDefault();
+  
     try {
-      const response = await LocalClient.post(`createCustomer/${selectedCompany.id}`, customerData);
+      if (!selectedCompany?.id && !selectedCompany?.companyName) {
+        toast.error("Please select a company first.");
+        return;
+      }
+  
+      // Dynamically construct the query params
+      const queryParams = selectedCompany.id
+        ? `companyId=${selectedCompany.id}`
+        : `companyName=${encodeURIComponent(selectedCompany.companyName)}`;
+  
+      // Send request with appropriate query parameter
+      const response = await LocalClient.post(`createCustomer?${queryParams}`, customerData);
+  
       if (response.status === 201) {
         toast.success("Customer added successfully");
         setCreateCustomer(false);
-        setCustomerData({ customerName: "", phoneNumber: "" });
-        // Refresh customers list
-        const updatedResponse = await LocalClient.get(`getCustomers/${selectedCompany.id}`);
-        if (updatedResponse.status === 200) {
-                // ✅ Get the new customer from response
-      const newCustomer = response.data.customer;
-          setCustomers((prevCustomers) => [...prevCustomers, newCustomer]); // Append without replacing
-
-        }
+  
+        console.log("This is the customer data on submit:", customerData);
+  
+        // Append new customer to the list without replacing the existing ones
+        setCustomers((prevCustomers) => [...prevCustomers, customerData]);
+  
+        // Reset form
+        setCustomerData({ customerName: "", phoneNo: "" });
       }
     } catch (error) {
       console.error("Error occurred:", error);
-      toast.error( error.response.data.message);
-      console.log("this is the error check", error.response.data.message);
-      
+      toast.error(error.response?.data?.message || "An error occurred");
+      console.log("This is the error check:", error.response?.data?.message);
     }
   };
+  
 
   const handleDeleteCompany = async (companyId) => {
     if (window.confirm("Are you sure you want to delete this company?")) {
@@ -198,6 +229,8 @@ const ManageCompany = () => {
   };
 
   const handleManageCompany = (company) => {
+    console.log(" this  is the company " ,company);
+    
     setSelectedCompany(company);
     setMenuOpen(null);
   };
@@ -277,7 +310,7 @@ const ManageCompany = () => {
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <Users className="w-5 h-5 text-blue-600" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 truncate w-52">{customer.customerName}</h3> 
+            <h3 className="text-lg font-medium text-gray-900 truncate w-52">{customer.name}</h3> 
             {/* ✅ Limits name width and truncates long text */}
           </div>
 
@@ -387,74 +420,80 @@ const ManageCompany = () => {
             
           </div>
         </div>
+{/* Companies List */}
+<div className="bg-white rounded-xl shadow-sm">
+  <div className="p-6 border-b border-gray-100">
+    <h2 className="text-lg font-semibold text-gray-900">Companies List</h2>
+  </div>
 
-        {/* Companies List */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">Companies List</h2>
-          </div>
-          
-          {filteredCompanies.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {filteredCompanies.map((company) => (
-                <div
-                  key={company.id}
-                  className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Building2 className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">{company.companyName}</h3>
-                      <p className="text-sm text-gray-500">Added on {new Date().toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleMenu(company.id)}
-                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <MoreVertical size={20} className="text-gray-600" />
-                    </button>
-                    {menuOpen === company.id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-10">
-                        <button
-                          onClick={() => handleManageCompany(company)}
-                          className="flex items-center gap-2 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Manage Company
-                        </button>
-                        <button
-                          onClick={() => handleEditCompany(company.id)}
-                          className="flex items-center gap-2 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Edit Company
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCompany(company.id)}
-                          className="flex items-center gap-2 w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                          Delete Company
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+  {filteredCompanies.length > 0 ? (
+    // Scrollable container with max height
+    <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+      {filteredCompanies.map((company) => (
+        <div
+          key={company.id}
+          className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-blue-600" />
             </div>
-          ) : (
-            <div className="p-6 text-center">
-              <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">No companies found</h3>
-              <p className="text-gray-500">
-                {searchTerm ? "No companies match your search criteria." : "Start by adding your first company."}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">{company.name}</h3>
+              <p className="text-sm text-gray-500">
+                Added on {new Date().toLocaleDateString()}
               </p>
             </div>
-          )}
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => toggleMenu(company.id)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <MoreVertical size={20} className="text-gray-600" />
+            </button>
+            {menuOpen === company.id && (
+              <div className="absolute right-0 mt-2 flex bg-white rounded-lg shadow-lg border border-gray-100 z-60 p-2">
+                <button
+                  onClick={() => handleManageCompany(company)}
+                  className="flex flex-col items-center justify-center px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Settings size={18} />
+                  <span className="text-xs">Manage</span>
+                </button>
+                {/* <button
+                  onClick={() => handleEditCompany(company.id)}
+                  className="flex flex-col items-center justify-center px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Edit size={18} />
+                  <span className="text-xs">Edit</span>
+                </button>
+                <button
+                  onClick={() => handleDeleteCompany(company.id)}
+                  className="flex flex-col items-center justify-center px-3 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 size={18} />
+                  <span className="text-xs">Delete</span>
+                </button> */}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ))}
+    </div>
+  ) : (
+    <div className="p-6 text-center">
+      <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-1">No companies found</h3>
+      <p className="text-gray-500">
+        {searchTerm
+          ? "No companies match your search criteria."
+          : "Start by adding your first company."}
+      </p>
+    </div>
+  )}
+</div>
+</div>
 
       {/* Add Company Modal */}
       {create && (

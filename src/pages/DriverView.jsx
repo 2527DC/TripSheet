@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import SignaturePad from 'react-signature-canvas';
-
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { LocalClient } from '../Api/API_Client';
+import { Globe, Mail, MapPin, Phone } from 'lucide-react';
 
 const DriverView = () => { 
     const [tripDetails, setTripDetails] = useState(null);
@@ -158,11 +158,8 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()){
-      toast.error(" validation error")
+    if (!validateForm())return
 
-    return;
-    }
 
     const formData = {
         ...data,
@@ -207,19 +204,43 @@ const handleRatingChange = (newRating) => {
     }));
 };
 
+
     return<>
     {visible?( <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
         <header className="flex flex-col md:flex-row items-center p-6 border-b border-gray-200">
-          <img src="/MLt.jpeg" alt="MLT Logo" className="w-24 h-24 mb-4 md:mb-0 md:mr-6" />
+          <img src="/MLt.jpeg" alt="MLT Logo" className="w-44 h-24 mb-4 md:mb-0 md:mr-6" />
           
           <div className="text-center md:text-left flex-grow">
-            <h1 className="text-2xl font-bold text-gray-800">MLT Corporate Solutions Private Limited</h1>
-            <p className="text-gray-600">123 Business Park, Main Street</p>
-            <p className="text-gray-600">City, State - PIN Code</p>
-            <p className="text-gray-600">Phone: +91 XXXXXXXXXX | Email: info@mltcorp.com</p>
-          </div>
+      <h1 className="text-2xl font-bold text-gray-800">
+        MLT Corporate Solutions Private Limited
+      </h1>
+      <p className="text-gray-600 flex items-center gap-2">
+        <MapPin className="w-5 h-5 text-gray-700" />
+        #766, Ground floor, 1st main road, Girinagar 2nd phase, 6th block, BSK 3rd stage,
+      </p>
+      <p className="text-gray-600">Bengaluru - 560085</p>
+      <p className="text-gray-600 flex items-center gap-2">
+        <Phone className="w-5 h-5 text-gray-700" />
+        9035354198 / 99 (24/7), 9980357272, 9686375747
+      </p>
+      <p className="text-gray-600 flex items-center gap-2">
+        <Mail className="w-5 h-5 text-gray-700" />
+        reservation@mitcorporate.com / info@mitcorporate.com
+      </p>
+      <p className="text-gray-600 flex items-center gap-2">
+        <Globe className="w-5 h-5 text-gray-700" />
+        <a
+          href="https://www.mltcorporatesolutions.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          www.mltcorporatesolutions.com
+        </a>
+      </p>
+    </div>
         </header>
       </div>
 

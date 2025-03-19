@@ -17,11 +17,7 @@ const TripSheetForm = () => {
     const[searchCompany,setSearchCompany]=useState("")
     const[companys, setCompanies]=useState([])
   
-    const [categoryOptions, setCategoryOptions] = useState([
-      { value: "", label: "Select a Category" },
-      { value: "Corporate", label: "Corporate" },
-  
-    ]);
+    const [categoryOptions, setCategoryOptions] = useState([ ]);
 
     
     const vehicleDetailsInput = [
@@ -52,6 +48,7 @@ const TripSheetForm = () => {
       dropAddress: "",
       acType: "",
       reportingTime: "",
+      category :""
       // "createdAt": "2025-02-18T04:13:56.554Z"
      
     });
@@ -71,7 +68,7 @@ const TripSheetForm = () => {
       const fetchVehicles = async () => {
         setLoading(true);
         try {
-          const result = await LocalClient.get(`vehicles?search=${search}`);
+          const result = await LocalClient.get(`vehicle-list?search=${search}`);
           console.log("🚀 API Response:", result);
           console.log("✅ Response Data:", result.data);
   
@@ -93,11 +90,32 @@ const TripSheetForm = () => {
   
   
   
+
+
+const fetchCategory = async () => {
+  try {
+    const response = await LocalClient.get("fetchCategory");
+    if (response.status === 200) {
+      const formattedCategories = response.data.map((category) => ({
+        value: category.name, // Use id for value
+        label: category.name, // Use name for label
+      }));
+      setCategoryOptions([{ value: "", label: "Select a Category" }, ...formattedCategories]);
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
+};
+
+useEffect(() => {
+  fetchCategory();
+}, []);
+
     //  driver dropdown logic 
     useEffect(() => {
       const driverOptions = drivers.map((driver) => ({
-        value: driver.driverName,
-        label: driver.driverName,
+        value: driver.name,
+        label: driver.name
   
       }));
       setOptions([{ value: "", label: "Select a driver" }, ...driverOptions]);
@@ -107,8 +125,8 @@ const TripSheetForm = () => {
     
     useEffect(() => {
       const  customerOptions = customer.map((customer) => ({
-        value: customer.customerName,
-        label: customer.customerName,
+        value: customer.name,
+        label: customer.name,
   
       }));
      setCustomerOption([{ value: "", label: "Select a customer" }, ...customerOptions]);
@@ -143,10 +161,11 @@ const TripSheetForm = () => {
       if (name=="driver") {
         console.log("this is the driver" ,value);
         setDriverName(value)
-      }
-
-
-  
+      }    
+      if (name=="category") {
+        console.log("this is the category" ,name ,value);
+      }    
+      
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -159,14 +178,13 @@ const TripSheetForm = () => {
     get the driver phoen and vendor related to the driver */
     useEffect(()=>{
   
-   const driver = drivers.find((d) => d.driverName === driverName);
+   const driver = drivers.find((d) => d.name === driverName);
   
    console.log(" this is the  method inside the useeffect to get the driver phoen and vendor related to the driver ");
-      let vendorName= driver && driver.vendor ? driver.vendor.vendorName : "No Vendor Found";
+     
       let driverPh = driver && driver.phoneNo? driver.phoneNo : "phone notfound";
       setFormData((prev) => ({
         ...prev,
-        vendorName:vendorName ||"",
         driverPh:driverPh
    
       })); 
@@ -175,9 +193,9 @@ const TripSheetForm = () => {
       /* this is the  method  to get the customer Ph */
     useEffect(()=>{
   
-      const  found= customer.find((d)=> d.customerName === data.customer)
+      const  found= customer.find((d)=> d.name === data.customer)
 
-         let customerPh = found && found.phoneNo? found.phoneNo : "phone notfound";
+         let customerPh = found && found.phoneNo? found.phoneNo : "";
          setFormData((prev) => ({
            ...prev,
            customerPh:customerPh || ""
@@ -191,24 +209,25 @@ const TripSheetForm = () => {
   
     //  Handles the autocomplete of vehicle details 
     const handleDataAuto = (vehicle) => {
-      setSearch(vehicle.vehicleNo);
+      const { vehicleNo, vehicleType, vendor, drivers } = vehicle;
+      
+      const vendorName = vendor?.name || ""; // Handle cases where vendor might be null
+    
+      setSearch(vehicleNo);
       setVehicles([]);
-      setDrivers(vehicle.drivers);
-      
-      console.log(" this isselected data  ", vehicle);
-      // console.log(" this is vehicle type ", selectedVehicle.vehicleType);
-      
-     
+      setDrivers(drivers);
+    
       setFormData((prev) => ({
         ...prev,
-        vehicleType: vehicle.vehicleType || "", // ✅ Store vendorName from selected vehicle
-        vehicle:vehicle.vehicleNo || "",
+        vehicleType: vehicleType || "",
+        vehicle: vehicleNo || "",
+        vendorName: vendorName, // ✅ Cleaner vendorName assignment
       }));
     };
- 
+    
   
      const  handleCompanyAutoFill=(company)=>{    
-      setSearchCompany(company.companyName);
+      setSearchCompany(company.name);
   
       console.log(" this is the comapany customers " ,company.customers);
       
@@ -219,7 +238,7 @@ const TripSheetForm = () => {
       
       setFormData((prev)=>({
         ...prev,
-        company:company.companyName || ""
+        company:company.name || ""
       }))
      }
 
@@ -252,40 +271,66 @@ const TripSheetForm = () => {
   };
   
   const generateLink = async () => {
-    console.log(" this is the  request data ",data);
+    console.log("This is the request data", data);
+  
+    // Validation
+    const requiredFields = [
+      { key: "driver", label: "Driver Name" },
+      { key: "driverPh", label: "Driver Phone" },
+      { key: "vendorName", label: "Vendor Name" },
+      { key: "vehicle", label: "Vehicle" },
+      { key: "vehicleType", label: "Vehicle Type" },
+      { key: "company", label: "Company" },
+      { key: "customer", label: "Customer Name" },
+      { key: "customerPh", label: "Customer Phone" },
+      { key: "reportingAddress", label: "Reporting Address" },
+      { key: "dropAddress", label: "Drop Address" },
+      { key: "acType", label: "AC Type" },
+      { key: "reportingTime", label: "Reporting Time" }
+    ];
+  
+    const missingFields = requiredFields.filter(field => !data[field.key]);
+  
+    if (missingFields.length > 0) {
+      missingFields.forEach(field => toast.error(`${field.label} is required`));
+      return;
+    }
+
+    console.log(" the request data ",data);
+    
+  
     try {
       const res = await LocalClient.post("/generate-link", data);
       const link = `${window.location.origin}/driver-form?formId=${res.data.data.formId}`;
-      console.log(" this is the responce ",res);
-     
+      console.log("This is the response", res);
+  
       setGeneratedLink(link);
-
-
-      if (res.status===201) {
-       toast.success(" TripSheet Created ")
-        setSearch("")
-        setSearchCompany("")
-       setFormData({
-        driver: "",
-        driverPh: "",
-        vendorName: "",
-        vehicle: "",
-        vehicleType: "",
-        company:"",
-        customer:"",
-        customerPh: "",
-        reportingAddress: "",
-        dropAddress: "",
-        acType: "",
-        reportingTime: "",
-      })
+  
+      if (res.status === 201) {
+        toast.success("Trip Sheet Created");
+        setSearch("");
+        setSearchCompany("");
+        setFormData({
+          driver: "",
+          driverPh: "",
+          vendorName: "",
+          vehicle: "",
+          vehicleType: "",
+          company: "",
+          customer: "",
+          customerPh: "",
+          reportingAddress: "",
+          dropAddress: "",
+          acType: "",
+          reportingTime: "",
+        });
       }
     } catch (error) {
-
-      console.log(" An error occured ",error);
-      
-      
-    }}
+      console.log("An error occurred", error);
+      toast.error("Failed to generate trip sheet");
+    }
+  };
+  
 
    const handleNavigarion=()=>{
     navigate("/tripsheet-list")
@@ -436,7 +481,7 @@ const TripSheetForm = () => {
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
                   >
                     <Building2 size={16} className="text-gray-500" />
-                    <span>{company.companyName}</span>
+                    <span>{company.name}</span>
                   </li>
                 ))}
               </ul>

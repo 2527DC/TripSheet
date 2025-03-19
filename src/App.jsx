@@ -20,6 +20,8 @@ import ManageVendor from "./pages/ManageVendor";
 import DutySlip from "./components/DutySlip";
 import DriverView from "./pages/DriverView";
 import ManageAdmins from "./pages/ManageAdmins";
+import ParentComponent from "./components/ParentComponent";
+import ManageCategory from "./components/ManangeCategory";
 
 
 // ✅ Layout component for authenticated pages
@@ -63,8 +65,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/driver-form" element={<DriverView />} />
-          <Route path="/check" element={<DutySlip/>} />
-
+          <Route path="/duty-slip" element={<DutySlip/>} />
+      
           {/* Protected Routes */}
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
@@ -73,12 +75,12 @@ function App() {
               <Route path="/clients" element={<ManageCompany />} />
               <Route path="/tripsheet-list" element={<TripSheet />} />
               <Route path="/tripsheets" element={<TripSheetForm />} />
-            </Route>
-            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
+              <Route path="/manage-category" element={<ManageCategory/>} />
+              <Route path="/vendors" element={<ManageVendor />} />
               <Route path="/driver" element={<ManageDrivers />} />
             </Route>
+           
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
-              <Route path="/vendors" element={<ManageVendor />} />
               <Route path="/manage-admins" element={<ManageAdmins />} />
             </Route>
           </Route>
