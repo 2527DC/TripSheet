@@ -15,7 +15,7 @@ const Login = () => {
           useEffect(() => {
             const user = localStorage.getItem("user"); // Check if user is logged in
             if (user) {
-              navigate("/dashboard"); // Redirect if already logged in
+              navigate("/"); // Redirect if already logged in
             }
           }, []);
         
@@ -30,7 +30,7 @@ const Login = () => {
     
     if (success) {
       console.log("this is the success returns in if", success);
-      const from = location.state?.from?.pathname || "/dashboard";
+      const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } else {
       console.log("this is the success returns in else", success);
@@ -105,12 +105,12 @@ const Login = () => {
 
         {/* Optional Footer */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          {/* <p className="text-sm text-gray-600">
             Forgot password?{' '}
             <a href="#" className="text-blue-600 hover:underline">
               Reset here
             </a>
-          </p>
+          </p> */}
         </div>
       </div>
     </div>

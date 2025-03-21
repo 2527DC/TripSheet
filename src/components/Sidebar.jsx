@@ -18,12 +18,12 @@ const Sidebar = () => {
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const menuItems = [
-    {
-      path: '/dashboard',
-      name: 'Dashboard',
-      icon: LayoutDashboard,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ]
-    },
+    // {
+    //   path: '/dashboard',
+    //   name: 'Dashboard',
+    //   icon: LayoutDashboard,
+    //   roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ]
+    // },
     {
       path: '/manage-admins',
       name: 'Admins',

@@ -1,37 +1,73 @@
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+// Function to format date as "DD-MM-YYYY"
+const formatDate = (isoDate) => {
+  if (!isoDate) return ""; // Handle null/undefined dates
+
+  const dateObj = new Date(isoDate);
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const year = dateObj.getFullYear();
+
+  return `${day}-${month}-${year}`; // Output: "18-02-2025"
+};
+
 const handleDownloadExcel = (data) => {
   console.log("Download Excel clicked");
 
   // Define custom headers
   const customHeaders = [
-    "Driver Name", 
-    "Vehicle Number", 
-    "Customer Name", 
-    "Customer Phone", 
-    "Reporting Address", 
-    "Drop Address", 
-    "AC Type", 
-    "Booking Status", 
-    "Company", 
-    "Vendor Name", 
-    "Reporting Time"
+    "TripID",
+    "Date",
+    "Status",
+    "Vendor Name",
+    "Customer",
+    "Driver Name",
+    "Vehicle Number",
+    "Vehicle Type",
+    "Passenger Name",
+    "Passenger Phone",
+    "Reporting Address",
+    "Drop Address",
+    "Category",
+    "AC Type",
+    "Reporting Time",
+    "Open Km",
+    "Close Km",
+    "Total Km",
+    "Open Hr",
+    "Close Hr",
+    "Total Hr",
+    "Parking Charges",
+    "Toll Charges",
   ];
 
-  // Transform data to match the headers
+  // Transform data to match the headers, with formatted date
   const formattedData = data.map((item) => [
+    item.id,
+    formatDate(item.createdAt), // Convert date here
+    item.status,
+    item.vendorName,
+    item.company,
     item.driverName,
     item.vehicleNo,
+    item.vehicleType,
     item.customer,
     item.customerPh,
     item.reportingAddress,
     item.dropAddress,
+    item.category,
     item.acType,
-    item.status,
-    item.company,
-    item.vendorName,
-    item.reportingTime
+    item.reportingTime,
+    item.openKm,
+    item.closeKm,
+    item.totalKm,
+    item.openHr,
+    item.closeHr,
+    item.totalHr,
+    item.parkingCharges,
+    item.toolCharges,
   ]);
 
   // Create worksheet and add custom headers

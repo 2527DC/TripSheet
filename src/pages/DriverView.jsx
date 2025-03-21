@@ -9,7 +9,7 @@ const DriverView = () => {
     const [tripDetails, setTripDetails] = useState(null);
     const location = useLocation();
     const [visible,setvisible]=useState(false)
-    const [hr,setHr]=useState("")
+
     // Extract the tripId from the URL
     const queryParams = new URLSearchParams(location.search);
     const tripId = queryParams.get('formId');
@@ -111,18 +111,21 @@ useEffect(() => {
 }, [data.openHr, data.closeHr]);
 
 
- 
+const handleInputChange = (e) => {
+  const { name, type, value, files } = e.target;
 
-    const handleInputChange = (e) => {
-        const { name, type, value, files } = e.target;
+  let newValue = value;
 
-        setFormData((prevState) => ({
-            ...prevState,
-            [name]: type === "file" ? (files && files[0]) : 
-                    ["openKm", "closeKm","toolCharges","parkingCharges"].includes(name) ? 
-                    Number(value) || 0 : value, // Convert specific fields to numbers
-        }));
-    };
+  if (["openKm", "closeKm", "toolCharges", "parkingCharges"].includes(name)) {
+      newValue = Number(value);
+      if (newValue < 0 || isNaN(newValue)) newValue = 0; // Prevent negative values
+  }
+
+  setFormData((prevState) => ({
+      ...prevState,
+      [name]: type === "file" ? (files && files[0]) : newValue,
+  }));
+};
 
     
     const validateForm = () => {

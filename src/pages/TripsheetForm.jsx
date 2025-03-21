@@ -29,7 +29,7 @@ const TripSheetForm = () => {
       { id: "category", label: "Category", type: "select", required: true, name: "category", options: categoryOptions },
     ];
     const passengerInput = [
-      { id: "passengerName", label: "Customer Name", placeholder: "Enter passenger name", type: "select", required: true, name: "customer" ,options: customerOption},
+      { id: "passengerName", label: "Passenger", placeholder: "Enter passenger name", type: "select", required: true, name: "customer" ,options: customerOption},
       { id: "customerPh", label: "Phone Number", placeholder: "Phone Number", type: "tel", required: true, name: "customerPh" },
       { id: "reportingAddress", label: "Reporting Address", placeholder: "Reporting Address", type: "text", required: true, name: "reportingAddress" },
       { id: "dropAddress", label: "Drop Address", placeholder: "Drop Address", type: "text", required: true, name: "dropAddress" },
@@ -129,7 +129,7 @@ useEffect(() => {
         label: customer.name,
   
       }));
-     setCustomerOption([{ value: "", label: "Select a customer" }, ...customerOptions]);
+     setCustomerOption([{ value: "", label: "Select a Passenger" }, ...customerOptions]);
      console.log(" this is the array of customers",customerOptions);
      
     }, [customer]); 
