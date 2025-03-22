@@ -21,5 +21,6 @@ export const API ={
     updateSignature:"updateSignature",
     getCustomers:"getCustomers",
     createCustomer:"createCustomer",
-    deleteCustomer:"deleteCustomer"
+    deleteCustomer:"deleteCustomer",
+    deleteDriver:"delete-driver"
 }

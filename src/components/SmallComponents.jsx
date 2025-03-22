@@ -28,11 +28,20 @@ export const Modal = ({ isOpen, onClose, children, title }) => {
   );
 };
 
-  
-  export const InputField = ({ label, type, option, ...props }) => (
+export const InputField = ({ label, type, option, ...props }) => {
+  // Prevent non-numeric input for "tel" type
+  const handleKeyDown = (e) => {
+    if (type === "tel") {
+      if (!/[\d\bArrowLeftArrowRightDelete]/.test(e.key)) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-  
+
       {type === "select" ? (
         // ✅ Render a select dropdown if type is "select"
         <select
@@ -53,10 +62,13 @@ export const Modal = ({ isOpen, onClose, children, title }) => {
         <input
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           type={type}
-          
+          onKeyDown={handleKeyDown} // 🔥 Prevent letters in phone number
+          maxLength={type === "tel" ? 10 : undefined} // 🔥 Restrict phone number to 10 digits
+          pattern={type === "tel" ? "[0-9]{10}" : undefined} // 🔥 Ensure exactly 10 digits in validation
+          inputMode={type === "tel" ? "numeric" : "text"} // 🔥 Optimize mobile keyboard
           {...props}
         />
       )}
     </div>
   );
-  
+};

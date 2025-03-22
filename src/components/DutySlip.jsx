@@ -36,7 +36,8 @@ const DutySlip = () => {
     totalHr: queryParams.get("totalHr"),
     acType: queryParams.get("acType"),
     date:queryParams.get("createdAt"),
-    customer:queryParams.get("company")
+    customer:queryParams.get("company"),
+    driverPh:queryParams.get("driverPh")
   };
 
   console.log("Received duty slip data:", dutyData);
@@ -166,7 +167,7 @@ const DutySlip = () => {
             <p style={{ margin: '2px 0' }}><strong>Category:</strong> {dutyData.category}</p>
             <p style={{ margin: '2px 0' }}><strong>Vehicle:</strong> {dutyData.vehicleNo} ({dutyData.vehicleType})</p>
             <p style={{ margin: '2px 0' }}><strong>Vehicle Type:</strong> {dutyData.vehicleType}</p>
-            <p style={{ margin: '2px 0' }}><strong>Driver:</strong> {dutyData.driverName}</p>
+            <p style={{ margin: '2px 0' }}><strong>Driver:</strong> {dutyData.driverName} ({dutyData.driverPh})</p>
             <p style={{ margin: '2px 0' }}><strong>AC Type:</strong> {dutyData.acType}</p>
        
           </div>

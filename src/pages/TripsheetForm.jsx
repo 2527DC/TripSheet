@@ -48,7 +48,8 @@ const TripSheetForm = () => {
       dropAddress: "",
       acType: "",
       reportingTime: "",
-      category :""
+     
+      
       // "createdAt": "2025-02-18T04:13:56.554Z"
      
     });
@@ -211,6 +212,8 @@ useEffect(() => {
     const handleDataAuto = (vehicle) => {
       const { vehicleNo, vehicleType, vendor, drivers } = vehicle;
       
+      console.log(" this is the selectedd vehicle " ,vehicle);
+      
       const vendorName = vendor?.name || ""; // Handle cases where vendor might be null
     
       setSearch(vehicleNo);
@@ -221,7 +224,9 @@ useEffect(() => {
         ...prev,
         vehicleType: vehicleType || "",
         vehicle: vehicleNo || "",
-        vendorName: vendorName, // ✅ Cleaner vendorName assignment
+        vendorName: vendorName,
+        vehicleId:vehicle.id
+        // ✅ Cleaner vendorName assignment
       }));
     };
     
@@ -286,7 +291,9 @@ useEffect(() => {
       { key: "reportingAddress", label: "Reporting Address" },
       { key: "dropAddress", label: "Drop Address" },
       { key: "acType", label: "AC Type" },
-      { key: "reportingTime", label: "Reporting Time" }
+      { key: "reportingTime", label: "Reporting Time" },
+      { key: "category", label: "Category" }
+      
     ];
   
     const missingFields = requiredFields.filter(field => !data[field.key]);
@@ -323,6 +330,7 @@ useEffect(() => {
           dropAddress: "",
           acType: "",
           reportingTime: "",
+          driverPh:""
         });
       }
     } catch (error) {
@@ -335,6 +343,8 @@ useEffect(() => {
    const handleNavigarion=()=>{
     navigate("/tripsheet-list")
   }
+  const readOnlyFields = ["customerPh", "driverPh","vendorName","vehicleType"];
+
   return (
 <>
       {/* Header */}
@@ -404,6 +414,7 @@ useEffect(() => {
                     placeholder={input.label}
                     value={data[input.name] || ""}
                     onChange={handleInputChange}
+                    readOnly={readOnlyFields.includes(input.name)} 
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -506,6 +517,7 @@ useEffect(() => {
                     placeholder={input.placeholder}
                     value={data[input.name] || ""}
                     onChange={handleInputChange}
+                    readOnly={readOnlyFields.includes(input.name)}  
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -535,7 +547,7 @@ useEffect(() => {
 <div className="flex justify-end pt-4">
   {!generatedLink ? (
     <div className="mt-5">
-      <button 
+      <button   
         className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors"
         onClick={generateLink}
       >

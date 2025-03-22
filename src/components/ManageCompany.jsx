@@ -99,31 +99,9 @@ const ManageCompany = () => {
   ], []);
 
   const handleInputChange = useCallback((e) => {
-    let { name, value, type } = e.target;
-  
-    if (type === "tel") {
-      // Allow only numbers
-      value = value.replace(/\D/g, "");
-  
-      // Restrict input to exactly 10 digits
-      if (value.length > 10) {
-        value = value.slice(0, 10);
-      }
-    }
-  
+    const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
-  
-  const handleKeyDown = (e) => {
-    if (e.target.type === "tel") {
-      // Allow only numeric keys, Backspace, Arrow keys, and Delete
-      if (!/[\d\bArrowLeftArrowRightDelete]/.test(e.key)) {
-        e.preventDefault();
-      }
-    }
-  };
-  
-  
 
   const handleCustomerInputChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -374,7 +352,7 @@ const ManageCompany = () => {
                     )}
                   </div>
                 </div>
-              ))}
+              ))} 
             </div>
           ) : (
             <div className="p-6 text-center">

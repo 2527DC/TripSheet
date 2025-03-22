@@ -13,10 +13,10 @@ import { Link, useLocation } from 'react-router-dom';
 const Sidebar = () => {
   const { user, logout } = useAuth() || { user: {}, logout: () => {} };
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
+  
   console.log("User Data:", user); // Debugging user data
 
-  const toggleSidebar = () => setIsOpen(!isOpen);
+
   const menuItems = [
     // {
     //   path: '/dashboard',

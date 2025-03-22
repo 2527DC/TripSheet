@@ -24,6 +24,8 @@ const getRatingLabel = (rating) => {
 
 const TripDetails = ({ selectedTrip, goBack ,updateTrip}) => {
   
+  console.log(" this is the trip Details Component");
+  
   const [trip, setTrip] = useState(selectedTrip || {});
   const [editingFields, setEditingFields] = useState({});
   const [editedValues, setEditedValues] = useState({});
