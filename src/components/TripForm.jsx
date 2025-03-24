@@ -512,11 +512,18 @@ const MemoizedTripDetails = memo(({ selectedTrip, goBack, updateTrip }) => (
 ));
 
 const LogEntry = memo(({ log }) => (
-  <div className="mb-2">
-    <p className="text-sm text-gray-700">
-      {/* log entry content */}
+  <div key={log.id} className="mb-2">
+  <p className="text-sm text-gray-700"> 
+  For <span className="font-semibold m-1"> TripSheetId  </span>  
+ <span className="font-semibold text-red-500 m-1">"{log.tripSheetId}"</span> 
+<span className="font-semibold">{log.editedBy}</span> changed  
+<span className="font-semibold"> {log.fieldName} </span> 
+from "<span className="text-red-500">{log.oldValue}</span>" 
+to "<span className="text-green-500">{log.newValue}</span>"  
+on <span className="text-gray-500">{new Date(log.editedAt).toLocaleString()}</span>
     </p>
   </div>
+
 ));
 
 const LoadingSpinner = memo(() => (
