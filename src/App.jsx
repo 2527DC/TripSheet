@@ -5,7 +5,6 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
 import { ROLES } from "./utils/auth";
 import ManageCompany from "./components/ManageCompany";
@@ -69,8 +68,8 @@ function App() {
       
           {/* Protected Routes */}
           <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<TripSheetForm />} />
+        
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
               <Route path="/clients" element={<ManageCompany />} />
               <Route path="/tripsheet-list" element={<TripSheet />} />

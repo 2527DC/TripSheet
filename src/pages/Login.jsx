@@ -15,7 +15,7 @@ const Login = () => {
           useEffect(() => {
             const user = localStorage.getItem("user"); // Check if user is logged in
             if (user) {
-              navigate("/dashboard"); // Redirect if already logged in
+              navigate("/"); // Redirect if already logged in
             }
           }, []);
         
@@ -30,7 +30,7 @@ const Login = () => {
     
     if (success) {
       console.log("this is the success returns in if", success);
-      const from = location.state?.from?.pathname || "/dashboard";
+      const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } else {
       console.log("this is the success returns in else", success);
@@ -66,7 +66,7 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
@@ -74,7 +74,7 @@ const Login = () => {
                 value={credentials.username}
                 onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
                 className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter username"
+                placeholder="Enter Email"
               />
             </div>
           </div>
@@ -105,12 +105,12 @@ const Login = () => {
 
         {/* Optional Footer */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          {/* <p className="text-sm text-gray-600">
             Forgot password?{' '}
             <a href="#" className="text-blue-600 hover:underline">
               Reset here
             </a>
-          </p>
+          </p> */}
         </div>
       </div>
     </div>

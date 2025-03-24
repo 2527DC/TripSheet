@@ -2,6 +2,7 @@
   import { useAuth } from "./store/ AuthProvider";
   import { useNavigate } from "react-router-dom";
    import { LocalClient } from "./Api/API_Client";
+import { API } from "./Api/Endpoints";
 
 
   export function Login() {
@@ -25,7 +26,7 @@
       console.log(`this is the mail  ${email} and this sis ther password ${password}`);
       try {
         
-    const response =  await LocalClient.post("login", { email, password });
+    const response =  await LocalClient.post(API.login, { email, password });
 
         if (response.data.success) {
           const { role, message } = response.data;

@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { generatePDF } from '../utils/pdfUtils';
 import { imageUrl } from '../Api/API_Client';
 
 const DutySlip = () => {
+
 
 
   const location = useLocation();
@@ -17,7 +18,7 @@ const DutySlip = () => {
     vehicleNo: queryParams.get("vehicleNo"),
     vehicleType: queryParams.get("vehicleType"),
     reportingTime: queryParams.get("reportingTime"),
-    customer: queryParams.get("customer"),
+    passenger: queryParams.get("customer"),
     category: queryParams.get("category"),
     customerPh: queryParams.get("customerPh"),
     reportingAddress: queryParams.get("reportingAddress"),
@@ -34,6 +35,9 @@ const DutySlip = () => {
     totalKm: queryParams.get("totalKm"),
     totalHr: queryParams.get("totalHr"),
     acType: queryParams.get("acType"),
+    date:queryParams.get("createdAt"),
+    customer:queryParams.get("company"),
+    driverPh:queryParams.get("driverPh")
   };
 
   console.log("Received duty slip data:", dutyData);
@@ -41,7 +45,9 @@ const DutySlip = () => {
   if (!dutyData.id) {
     return <p>No duty slip data available. Please go back and select a report.</p>;
   }
+  const dateObj = new Date(dutyData.date);
 
+  const formattedDate = dateObj.toLocaleDateString('en-GB');
   const url = `${imageUrl}${dutyData.guest_url}`;
 
   const ratingLabels = {
@@ -52,7 +58,6 @@ const DutySlip = () => {
     4: "Satisfied",
     5: "Very Satisfied",
   };
-
   return (
     <div>
       <style>
@@ -61,6 +66,10 @@ const DutySlip = () => {
             .no-print {
               display: none;
             }
+            body {
+              margin: 0;
+              padding: 0;
+            }
           }
         `}
       </style>
@@ -68,128 +77,200 @@ const DutySlip = () => {
         id="duty-slip"
         style={{
           width: '210mm',
-          minHeight: '297mm', // A4 height
+          minHeight: '148mm', // Half A4 height
           margin: '0 auto',
-          padding: '10mm',
+          padding: '5mm',
           fontFamily: 'Arial, sans-serif',
           border: '2px solid #000',
           background: '#fff',
           boxSizing: 'border-box',
+          fontSize: '12px',
         }}
       >
-        {/* Header Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10mm' }}>
-        <div>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: "10px" }}>
-              <img src="/MLt.jpeg" alt="MLT Corporate Solutions Logo" style={{ height: '50px', marginRight: '10px' }} />
-              <h2>MLT Corporate Solutions</h2>
+        {/* Header Section - Adjusted Layout */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          marginBottom: '5mm',
+          borderBottom: '1px solid #000',
+          paddingBottom: '5mm'
+        }}>
+          <img
+            src="/MLt.jpeg"
+            alt="MLT Logo"
+            style={{
+              width: '150px',
+              height: '60px',
+              marginRight: '5px',
+            }}
+          />
+          <div style={{ flexGrow: 1 }}>
+            <h1 style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold', 
+              margin: '2px 0',
+              lineHeight: '1.2'
+            }}>
+              MLT Corporate Solutions Private Limited
+            </h1>
+            <div style={{ fontSize: '10px', lineHeight: '1.3' }}>
+              <p style={{ margin: '2px 0' }}>
+                #766, Ground floor, 1st main road, Girinagar 2nd phase, 6th block, BSK 3rd stage,
+              </p>
+              <p style={{ margin: '2px 0' }}>Bengaluru - 560085</p>
+              <p style={{ margin: '2px 0' }}>Ph: 9035354198 / 99 (24/7), 9980357272, 9686375747</p>
+              <p style={{ margin: '2px 0' }}>
+                Email: reservation@mitcorporate.com / info@mitcorporate.com
+              </p>
+              <p style={{ margin: '2px 0' }}>
+                Web: www.mltcorporatesolutions.com
+              </p>
+              {/* www.mltcorporatesolutions.com */}
             </div>
-            <span style={{ padding: '2px 5px', borderRadius: '3px' }}>Status: {dutyData.status || 'Completed'}</span>
           </div>
-        
-          <div style={{ textAlign: 'right' }}>
-    
-            <div className="no-print">
-              <button
-                onClick={generatePDF}
-                style={{
-                  marginTop: '10px',
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Download PDF
-              </button>
-            </div>
+          <div style={{ textAlign: 'right', fontSize: '12px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'right' }}>
+  <tbody>
+    <tr>
+      <td style={{  padding: '6px', fontWeight: 'bold' }}>Status</td>
+      <td style={{  padding: '6px' }}>{dutyData.status}</td>
+    </tr>
+    <tr>
+      <td style={{  padding: '6px', fontWeight: 'bold' }}>Duty ID</td>
+      <td style={{  padding: '6px' }}>{dutyData.id}</td>
+    </tr>
+    <tr>
+      <td style={{  padding: '6px', fontWeight: 'bold' }}>Date</td>
+      <td style={{  padding: '6px' }}>{formattedDate}</td>
+    </tr>
+  </tbody>
+</table>
+
           </div>
         </div>
 
-        {/* Duty Details Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10mm' }}>
-          <div style={{ width: '48%' }}>
-            <p style={{ margin: '4px 0' }}><strong>Date:</strong> {dutyData.date}</p>
-            <p style={{ margin: '4px 0' }}><strong>Reporting Time:</strong> {dutyData.reportingTime}</p>
-            <p style={{ margin: '4px 0' }}><strong>Customer Name:</strong> {dutyData.customer}</p>
-            <p style={{ margin: '4px 0' }}><strong>Customer Ph:</strong> {dutyData.customerPh}</p>
-            <p style={{ margin: '4px 0' }}><strong>Reporting Address:</strong> {dutyData.reportingAddress}</p>
-            <p style={{ margin: '4px 0' }}><strong>Drop Address:</strong> {dutyData.dropAddress}</p>
+        {/* Compact Duty Details */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '5mm',
+          marginBottom: '5mm'
+        }}>
+          <div>
+            <p style={{ margin: '2px 0' }}><strong>Reporting Time:</strong> {dutyData.reportingTime}</p>
+            <p style={{ margin: '2px 0' }}><strong>Company:</strong> {dutyData.customer}</p>
+            <p style={{ margin: '2px 0' }}><strong>Passenger:</strong> {dutyData.passenger} ({dutyData.customerPh})</p>
+            <p style={{ margin: '2px 0' }}><strong>Reporting Address:</strong> {dutyData.reportingAddress}</p>
+            <p style={{ margin: '2px 0' }}><strong>Drop:</strong> {dutyData.dropAddress}</p>
           </div>
-          <div style={{ width: '48%' }}>
-            <p style={{ margin: '4px 0' }}><strong>Duty Id:</strong> {dutyData.id}</p>
-            <p style={{ margin: '4px 0' }}><strong>Category:</strong> {dutyData.category}</p>
-            <p style={{ margin: '4px 0' }}><strong>Vehicle Type:</strong> {dutyData.vehicleType}</p>
-            <p style={{ margin: '4px 0' }}><strong>Vehicle No:</strong> {dutyData.vehicleNo}</p>
-            <p style={{ margin: '4px 0' }}><strong>Driver:</strong> {dutyData.driverName}</p>
-            <p style={{ margin: '4px 0' }}><strong>AC Type:</strong> {dutyData.acType}</p>
+          <div>
+            <p style={{ margin: '2px 0' }}><strong>Category:</strong> {dutyData.category}</p>
+            <p style={{ margin: '2px 0' }}><strong>Vehicle:</strong> {dutyData.vehicleNo} ({dutyData.vehicleType})</p>
+            <p style={{ margin: '2px 0' }}><strong>Vehicle Type:</strong> {dutyData.vehicleType}</p>
+            <p style={{ margin: '2px 0' }}><strong>Driver:</strong> {dutyData.driverName} ({dutyData.driverPh})</p>
+            <p style={{ margin: '2px 0' }}><strong>AC Type:</strong> {dutyData.acType}</p>
+       
           </div>
         </div>
 
-        {/* KM and Hours Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10mm' }}>
-          <thead>
-            <tr>
-              <th style={{ border: '1px solid #000', padding: '8px', background: '#f0f0f0' }}></th>
-              <th style={{ border: '1px solid #000', padding: '8px', background: '#f0f0f0' }}>Open</th>
-              <th style={{ border: '1px solid #000', padding: '8px', background: '#f0f0f0' }}>Close</th>
-              <th style={{ border: '1px solid #000', padding: '8px', background: '#f0f0f0' }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>KM</td>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>{dutyData.openKm}</td>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>{dutyData.closeKm}</td>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>{dutyData.totalKm}</td>
-            </tr>
-            <tr>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>Hr</td>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>{dutyData.openHr}</td>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>{dutyData.closeHr}</td>
-              <td style={{ border: '1px solid #000', padding: '8px' }}>{dutyData.totalHr}</td>
-            </tr>
-          </tbody>
-        </table>
+        {/* Compact Table Section */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '2fr 1fr',
+          gap: '5mm',
+          marginBottom: '5mm'
+        }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+  <thead>
+    <tr>
+      <th style={{ border: '1px solid #000', padding: '5px', textAlign: 'center', background: '#f0f0f0', width: '25%' }}></th>
+      <th style={{ border: '1px solid #000', padding: '5px', textAlign: 'center', background: '#f0f0f0', width: '25%' }}>Open</th>
+      <th style={{ border: '1px solid #000', padding: '5px', textAlign: 'center', background: '#f0f0f0', width: '25%' }}>Close</th>
+      <th style={{ border: '1px solid #000', padding: '5px', textAlign: 'center', background: '#f0f0f0', width: '25%' }}>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>KM</td>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.openKm}</td>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.closeKm}</td>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.totalKm}</td>
+    </tr>
+    <tr>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>Hr</td>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.openHr}</td>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.closeHr}</td>
+      <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.totalHr}</td>
+    </tr>
+  </tbody>
 
-        {/* Additional Charges and Signature */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10mm' }}>
-          <div style={{ width: '40%' }}>
-            <p style={{ margin: '0 0 10px 0' }}><strong>Additional Charges:</strong></p>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ borderCollapse: 'collapse', width: '205%', marginBottom: '3mm'  ,marginTop:"10px"}}>
               <thead>
                 <tr>
-                  <th style={{ border: '1px solid #000', padding: '6px', background: '#f0f0f0' }}>Charges</th>
-                  <th style={{ border: '1px solid #000', padding: '6px', background: '#f0f0f0' }}>Amount</th>
+                  <th colSpan="2" style={{ border: '1px solid #000', padding: '3px', background: '#f0f0f0' }}>
+                    Additional Charges
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ border: '1px solid #000', padding: '6px' }}>Toll</td>
-                  <td style={{ border: '1px solid #000', padding: '6px' }}>{dutyData.toolCharges}</td>
+                  <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>Toll</td>
+                  <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.toolCharges}</td>
                 </tr>
                 <tr>
-                  <td style={{ border: '1px solid #000', padding: '6px' }}>Parking</td>
-                  <td style={{ border: '1px solid #000', padding: '6px' }}>{dutyData.parkingCharges}</td>
+                  <td style={{ border: '1px solid #000', padding: '5px' , textAlign: 'center'}}>Parking</td>
+                  <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{dutyData.parkingCharges}</td>
                 </tr>
               </tbody>
             </table>
-          </div>
-          <div style={{ width: '50%', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 10px 0' }}><strong>Guest Signature:</strong></p>
-            <img
-              src={url}
-              alt="Guest Signature"
-              style={{ maxWidth: '300px', height: 'auto', border: '1px solid #000', padding: '5px' }}
-            />
+          </table>
+
+          <div>
+           
+            <div style={{ textAlign: 'center' }}>
+             
+              <img
+                src={url}
+                alt="Guest Signature"
+                style={{ 
+                  maxWidth: '220px', 
+                  height: 'auto', 
+                 
+               
+                }}
+              />
+               <p style={{  fontSize: '16px' }}><strong>Guest Signature:</strong></p>
+            </div>
           </div>
         </div>
 
-        {/* Review Section */}
-        <div style={{ marginTop: '10mm' }}>
-          <strong>Review:</strong> {ratingLabels[dutyData.review]}
+        {/* Footer Section */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '3mm',
+          fontSize: '10px'
+        }}>
+          <div>
+            <p style={{ margin: '2px 0' }}><strong>Customer Feedback </strong> {ratingLabels[dutyData.review]}</p>
+          </div>
+          <div className="no-print">
+            <button
+              onClick={generatePDF}
+              style={{
+                padding: '4px 8px',
+                backgroundColor: '#007bff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              Download PDF
+            </button>
+          </div>
         </div>
       </div>
     </div>

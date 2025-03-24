@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from 'react';
 import { users } from '../utils/auth';
 import { toast } from 'react-toastify';
 import { LocalClient } from '../Api/API_Client';
+import { API } from '../Api/Endpoints';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +14,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await LocalClient.post("login", { email, password });
+      const response = await LocalClient.post(API.login, { email, password });
   
       if (response.status === 200) {
         toast.success("Login Success");

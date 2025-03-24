@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, memo } from "react";
+import { useEffect, useState } from "react";
 import { TripList } from "./Trips";
 import { CheckCircle, Clock, FileSpreadsheet, History, Plus, Search, Truck, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,54 +10,41 @@ import { Modal } from "./SmallComponents";
 import { toast } from "react-toastify";
 import { API } from "../Api/Endpoints";
 
-// Memoized button components
-const StatusButton = memo(({ Icon, text, colorClass, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center gap-2 px-4 py-2 ${colorClass} rounded-lg hover:bg-opacity-75 transition-colors`}
-  >
-    <Icon size={20} />
-    {text}
-  </button>
-));
-
-// Memoized suggestion item
-const SuggestionItem = memo(({ name, onClick }) => (
-  <li
-    onClick={() => onClick(name)}
-    className="p-2 hover:bg-gray-100 cursor-pointer"
-  >
-    {name}
-  </li>
-));
-
 function TripForm() {
   const [toDate, setToDate] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [trips, setTrips] = useState([]);
-  const [selectedTrip, setSelectedTrip] = useState();
-  const navigate = useNavigate();
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSearch, setSelectedSearch] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const { user } = useAuth();
-  const typeOptions = ["Driver", "Customer", "Company", "Vendor"];
   const [loading, setLoading] = useState(false);
+  const[selectedTrip,setSelectedTrip]=useState()
+  const navigate = useNavigate();
+ const [auditLogs,setAuditLogs]=useState([])
+ const [isOpen, setIsOpen] = useState(false);
+ const typeOptions = ["Driver", "Customer", "Company", "Vendor"];
  const statusOptions = ["All", "Approved", "Pending", "Rejected"];
+ const [selectedType, setSelectedType] = useState("");
+ const [selectedStatus, setSelectedStatus] = useState("");
+ const [searchQuery, setSearchQuery] = useState("");
+ const [selectedSearch, setSelectedSearch] = useState("");
+ const [suggestions, setSuggestions] = useState([]);
+ const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const { user } = useAuth()
 
-  // Memoized update function
-  const updateTrip = useCallback((updatedTrip) => {
-    setTrips(prev => prev.map(trip => trip.id === updatedTrip.id ? updatedTrip : trip));
-  }, []);
+  console.log(" this is the user " ,user);
+  
+  // console.log(" this is the selected type" ,selectedType);
+  
+  
 
+  const updateTrip = (updatedTrip) => {
+    setTrips((prevTrips) =>
+      prevTrips.map((trip) =>
+        trip.id === updatedTrip.id ? updatedTrip : trip
+      )
+    );
+  };
 // Separate validation function with advanced syntax
-const validateTripInputs = useCallback(({ searchQuery, fromDate, toDate, selectedType })  => {
+const validateTripInputs = ({ searchQuery, fromDate, toDate, selectedType }) => {
   const errors = [];
 
   // Check required fields with short-circuit evaluation
@@ -98,11 +85,10 @@ const validateTripInputs = useCallback(({ searchQuery, fromDate, toDate, selecte
   }
 
   return true;
-}, []);
-
+};
 
 // Optimized getTripList function
-const getTripList = useCallback(async () => {
+const getTripList = async () => {
   const inputs = { searchQuery, fromDate, toDate, selectedType };
 
   // Validate inputs and exit if invalid
@@ -137,11 +123,12 @@ const getTripList = useCallback(async () => {
     console.error(`Error fetching trip sheets: ${errorMessage}`, error);
     !toast.isActive('error') && toast.error(errorMessage === 'Failed to fetch trip sheets' ? 'Error Fetching Details' : errorMessage);
   }
-}, [searchQuery, fromDate, toDate, selectedType, selectedStatus]);
+};
 
+  const handleNewClick = () => {
+    navigate("/tripsheets");
+  };
 
-const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
-  const handleDownload = useCallback(() => handleDownloadExcel(trips), [trips]);
 
   useEffect(() => {
 
@@ -172,9 +159,27 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
     // Cleanup: clear the timeout when searchQuery changes or component unmounts
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, selectedType, selectedSearch]); // Added all dependencies
-
   
- const handleHistory = useCallback(async () => {
+
+ const handleSelectSuggestion = (name) => {
+  console.log(" this is ythe selcted search " ,name);
+   setSearchQuery(name)
+setSelectedSearch(name)
+setSuggestions([])
+ };
+
+
+
+
+  // handleDownloadExcel(selectedTrip)
+
+    const handleDownload=async()=>{
+
+        handleDownloadExcel(trips)
+
+    }
+  
+ const handleHistory=async()=>{
 
       try {
         const response= await LocalClient.get("getLogs")
@@ -190,10 +195,12 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
       } catch (error) {
         toast.error("Failed To Fetch the Logs")
       }
-    }, []);
+     
+    
+   }
   
  
-    const fetchedApprovedTrips = useCallback(async () => {
+    const fetchedApprovedTrips= async ()=>{
  
       try {
 
@@ -208,11 +215,10 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         console.log("ERROR ",error);
         toast.error("SERVER IS BUSY")
       }
-    }, []);
+    }
 
 
-
-    const fetchedPendingTrip = useCallback(async () => {
+    const  fetchedPendingTrip=  async()=>{
       try {
         const  response=await LocalClient.get(API.pendingTrips)
         if (response.status===200) {
@@ -224,11 +230,10 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         toast.error("SERVER IS BUSY")
       }
    
-    }, []);
+    }
 
 
-
-    const fetchedRejectedTrip = useCallback(async () => {
+    const  fetchedRejectedTrip=async  ()=>{
       try {
            const  response=await LocalClient.get(API.rejectedTrips)
         if (response.status===200) {
@@ -239,78 +244,11 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         console.log("ERROR ",error);
         toast.error("SERVER IS BUSY")
       }
-    }, []);
+    }
 
-   // Optimized suggestion handler
-   const handleSelectSuggestion = useCallback((name) => {
-    setSearchQuery(name);
-    setSelectedSearch(name);
-    setSuggestions([]);
-  }, []);
-  // Memoized suggestions
-  const memoizedSuggestions = useMemo(() => 
-    suggestions.map((item, index) => (
-      <SuggestionItem
-        key={index}
-        name={item.name}
-        onClick={handleSelectSuggestion}
-      />
-    )),
-  [suggestions, handleSelectSuggestion]);
+ ;
 
-  // Optimized useEffect for suggestions
-  useEffect(() => {
-    const controller = new AbortController();
     
-    const fetchSuggestions = async () => {
-      if (searchQuery.length < 2 || selectedSearch === searchQuery) {
-        setSuggestions([]);
-        return;
-      }
-
-      try {
-        const response = await LocalClient.get(`search?type=${selectedType}&query=${searchQuery}`, {
-          signal: controller.signal
-        });
-        setSuggestions(response.data);
-        setShowSuggestions(true);
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error("Error fetching suggestions:", error);
-          setSuggestions([]);
-        }
-      }
-    };
-
-    const debounceTimer = setTimeout(fetchSuggestions, 300);
-    return () => {
-      controller.abort();
-      clearTimeout(debounceTimer);
-    };
-  }, [searchQuery, selectedType, selectedSearch]);
-    
-    // Memoized status buttons
-    const statusButtons = useMemo(() => [
-      {
-        onClick: fetchedPendingTrip,
-        Icon: Clock,
-        text: "Pending",
-        colorClass: "text-yellow-600 bg-yellow-50"
-      },
-      {
-        onClick: fetchedApprovedTrips,
-        Icon: CheckCircle,
-        text: "Approved",
-        colorClass: "text-green-600 bg-green-50"
-      },
-      {
-        onClick: fetchedRejectedTrip,
-        Icon: XCircle,
-        text: "Rejected",
-        colorClass: "text-red-600 bg-red-50"
-      }
-    ], [fetchedPendingTrip, fetchedApprovedTrips, fetchedRejectedTrip]);
-
   return (<>
     {!selectedTrip?(
       <div className="container mx-auto p-4">
@@ -319,31 +257,59 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
           <Truck className="text-blue-600" />
           Trip Sheets
         </h2>
-     <div className="flex items-center gap-3">
-               {statusButtons.map((props, idx) => (
-                <StatusButton key={idx} {...props} />
-              ))}
-              {user.role === "SUPER_ADMIN" && (
-                <StatusButton
-                  onClick={handleHistory}
-                  Icon={History}
-                  text="History"
-                  colorClass="text-green-600 bg-green-50"
-                />
-              )}
-              <StatusButton
-                onClick={handleDownload}
-                Icon={FileSpreadsheet}
-                text="Export"
-                colorClass="text-green-600 bg-green-50"
-              />
-              <StatusButton
-                onClick={handleNewClick}
-                Icon={Plus}
-                text="New Trip"
-                colorClass="bg-blue-600 text-white hover:bg-blue-700"
-              />
-            </div>
+        <div className="flex items-center gap-3">
+
+        <button
+        onClick={fetchedPendingTrip}
+        className="flex items-center gap-2 px-4 py-2 text-yellow-600 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+      >
+        <Clock size={20} />
+        Pending
+      </button>
+
+         <button
+        onClick={fetchedApprovedTrips}
+        className="flex items-center gap-2 px-4 py-2 text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+      >
+        <CheckCircle size={20} />
+        Approved
+      </button>
+
+    
+      <button
+        onClick={fetchedRejectedTrip}
+        className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+      >
+        <XCircle size={20} />
+        Rejected
+      </button>
+
+         {
+          user.role==="SUPER_ADMIN"?
+          <button
+            onClick={handleHistory}
+            className="flex items-center gap-2 px-4 py-2 text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <History size={20} />
+            History
+          </button>:null
+         } 
+
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-2 px-4 py-2 text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <FileSpreadsheet size={20} />
+            Export
+          </button>
+          <button
+            onClick={handleNewClick}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={20} />
+            New Trip
+          </button>
+        </div>
       </div>
 
 {/*  this is the ui for the Filter SEARCH  */}
@@ -448,11 +414,11 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         
         </div>
       </div>
- 
+      {true?(<div>
   
-        {/* <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={"EDIT History"}> */}
+        <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={"EDIT History"}>
       {/* ✅ Make the history scrollable */}
-      {/* <div className="max-h-[400px] overflow-y-auto p-4">
+      <div className="max-h-[400px] overflow-y-auto p-4">
         {auditLogs.map((log) => (
           <div key={log.id} className="mb-2">
                 <p className="text-sm text-gray-700"> 
@@ -466,70 +432,28 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
                   </p>
                 </div>
               ))}
-            </div> */}
-          {/* </Modal> */}
-
-          <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={"EDIT History"}>
-            <div className="max-h-[400px] overflow-y-auto p-4">
-             {auditLogs.map((log) => (
-                <LogEntry key={log.id} log={log} />
-              ))}
             </div>
           </Modal>
 
+ 
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-             {loading ? (
-              <LoadingSpinner />
-            ) : (
-              <MemoizedTripList trips={trips} setSelectedTrip={setSelectedTrip} />
-            )}
+</div>):null}
+
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        </div>
-      ) : (
-        <MemoizedTripDetails
-          selectedTrip={selectedTrip}
-          goBack={() => setSelectedTrip(false)}
-          updateTrip={updateTrip}
-        />
-      )}
+        ) : (
+          <TripList trips={trips} setSelectedTrip={setSelectedTrip}/>
+        )}  
+      </div>
+    </div>
+    ):(<TripDetails   selectedTrip={ selectedTrip} goBack={()=>setSelectedTrip(false)} updateTrip={updateTrip} />)
+
+    }
     </>
   );
 }
 
-
-// Memoized child components
-const MemoizedTripList = memo(({ trips, setSelectedTrip }) => (
-  <TripList trips={trips} setSelectedTrip={setSelectedTrip} />
-));
-
-const MemoizedTripDetails = memo(({ selectedTrip, goBack, updateTrip }) => (
-  <TripDetails
-    selectedTrip={selectedTrip}
-    goBack={goBack}
-    updateTrip={updateTrip}
-  />
-));
-
-const LogEntry = memo(({ log }) => (
-  <div key={log.id} className="mb-2">
-  <p className="text-sm text-gray-700"> 
-  For <span className="font-semibold m-1"> TripSheetId  </span>  
- <span className="font-semibold text-red-500 m-1">"{log.tripSheetId}"</span> 
-<span className="font-semibold">{log.editedBy}</span> changed  
-<span className="font-semibold"> {log.fieldName} </span> 
-from "<span className="text-red-500">{log.oldValue}</span>" 
-to "<span className="text-green-500">{log.newValue}</span>"  
-on <span className="text-gray-500">{new Date(log.editedAt).toLocaleString()}</span>
-    </p>
-  </div>
-
-));
-
-const LoadingSpinner = memo(() => (
-  <div className="flex justify-center items-center h-32">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  </div>
-));
-
-export default memo(TripForm);
+export default TripForm;

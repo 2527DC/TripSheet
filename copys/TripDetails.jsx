@@ -4,6 +4,7 @@ import { CheckCircle2, Download, XCircle, Edit2, X } from "lucide-react";
 import SignaturePad from "react-signature-canvas";
 import { imageUrl, LocalClient } from "../Api/API_Client";
 import { toast } from "react-toastify";
+import { API } from "../src/Api/Endpoints";
 
 // Move getRatingLabel outside the component to make it globally accessible in this file
 const getRatingLabel = (rating) => {
@@ -91,7 +92,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
         previousValues
       });
 
-      const response = await LocalClient.patch("editField", {
+      const response = await LocalClient.patch(API.editField, {
         formId: trip.formId,
         fieldName: key,
         fieldValue: value,
@@ -119,7 +120,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
 
   const handleUpdateStatus = async (status) => {
     try {
-      const response = await LocalClient.patch("updateStatus", {
+      const response = await LocalClient.patch(API.updateStatus, {
         id: trip.formId,
         status: status,
       });
@@ -176,7 +177,7 @@ const TripDetails = ({ selectedTrip, goBack }) => {
     try {
       const signatureData = signatureRef.current.toDataURL();
 
-      const response = await LocalClient.patch("updateSignature", {
+      const response = await LocalClient.patch(API.updateSignature, {
         formId: trip.formId,
         type: type,
         signature: signatureData,

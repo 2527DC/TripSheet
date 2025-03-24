@@ -16,6 +16,7 @@ const ProtectedRoute = ({ roles }) => {
   }
 
   return <Outlet />; // Allows rendering of nested routes
+  
 };
 
 export default ProtectedRoute;
