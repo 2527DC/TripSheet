@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import {  Edit, MoreVertical, Plus, Search, Trash2, Truck, X } from 'lucide-react';
+import {  Edit, Edit2, MoreVertical, Plus, Search, Trash2, Truck, X } from 'lucide-react';
 import { LocalClient } from '../Api/API_Client';
 import { API, CreateDriver, CreatVehicle } from '../Api/Endpoints';
 import { toast } from "react-toastify";
@@ -68,7 +68,7 @@ const DriverList = React.memo(({ drivers , menuOpen ,handleEditDriver ,toggleMen
                         <div className="absolute right-0 mt-2 flex bg-white rounded-lg shadow-lg border border-gray-100 z-10 p-2">
                           <button onClick={() => handleEditDriver(driver)} className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
                             <Edit size={18} color='blue' />
-                            <span className="text-xs">Manage</span>
+                            <span className="text-xs">Edit</span>
                           </button>
                           <button onClick={() => handleDeleteDriver(driver)} className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
                             <Trash2 size={18} color='red' />
@@ -112,6 +112,7 @@ function ManageDrivers() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(null);
   const[isEditOpen,setIsEditOpen]=useState(false)
+  const [selectedDriver, setSelectedDriver] = useState({});
   // Memoized fetch drivers function
   const fetchDrivers = useCallback(async () => {
     try {
@@ -154,7 +155,7 @@ function ManageDrivers() {
     const debounceTimer = setTimeout(fetchVehicles, 300);
     return () => {
       isMounted = false;
-      controller.abort();
+      controller.abort("Aborted  the fetching of the Vehicles");
       clearTimeout(debounceTimer);
     };
   }, [search, formData.vehicleNo]);
@@ -298,11 +299,6 @@ function ManageDrivers() {
   ), [vendors, handleVendorSelect]);
 
 
-  const handleEditDriver = useCallback((driver) => {
-    setIsEditOpen(true)
-
-    console.log(" handle driver edit Cloicked ");
-  }, []);
 
   const toggleMenu = useCallback((driver) => {
   console.log(" this is the driver fro toggle button" ,driver);
@@ -327,13 +323,62 @@ function ManageDrivers() {
    
   }, []);
 
-      const handleEditSubmit=useCallback(async(e) => {
-        e.preventDefault();
-        console.log(" this  is the driver",driver);
-        console.log(" this is the submited data",formData);
+  const handleEditDriver = (driver) => {
+    setSelectedDriver(driver);
+    setFormData({
+      driverName: driver.name || "",
+      phoneNo: driver.phoneNo || "",
+      vehicleId: driver.vehicle.id || "",
+      vehicleNo: driver.vehicle.vehicleNo || "",
+    });
+  
+    setSearch(driver.vehicle.vehicleNo || "");  // Set default vehicle number
+    setIsSearchEnabled(false);  // Disable search until Edit is clicked
+    setIsEditOpen(true);
+  };
+ 
+  const handleEditSubmit = useCallback(
+    async (e) => {  
+      e.preventDefault();
+  
+      if (!selectedDriver) {
+        toast.error("No driver selected for editing");
+        return;
+      }
+  
+      const updatedDriverData = {
+        driverId: selectedDriver.id, // Include driver ID
+        driverName: formData.driverName,
+        phoneNo: formData.phoneNo,
+        vehicleId: formData.vehicleId, // Send updated vehicleId
+      };
+  
+      console.log("The updated field:", updatedDriverData);
+  
+      try {
+        const response = await LocalClient.patch(API.updateDriver, updatedDriverData);
+  
+        if (response.status === 200) {
+          toast.success("Driver updated successfully!");
+        }
+        setFormData({ driverName: '', phoneNo: '', vehicleType: '', vehicleNo: '', vehicleId: "" });
+        setIsEditOpen(false);
+      } catch (error) {
+        console.error("Error updating driver:", error);
+  
+        // Handle 400 Bad Request errors
+        if (error.response && error.response.status === 400) {
+          toast.error(error.response.data.error || "Bad Request: Invalid input");
+        } else {
+          toast.error("An unexpected error occurred. Please try again.");
+        }
+      }
+    },
+    [selectedDriver, formData] // ✅ Dependencies
+  );
+  
+      const [isSearchEnabled, setIsSearchEnabled] = useState(false); // Controls input editability
 
-
-      }, []);
   return (
     <>
     <div className="bg-white rounded-lg shadow-md p-2">
@@ -526,45 +571,47 @@ function ManageDrivers() {
 
 
           <div className="relative mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Vehicle Number
-            </label>
-            <div className="relative flex items-center">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search vehicle number..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsVehicleModalOpen(true)}
-                className="ml-2 p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-                aria-label="Add vehicle"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Vehicle Number
+  </label>
+  <div className="relative flex items-center">
+    <div className="relative flex-1">
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => isSearchEnabled && setSearch(e.target.value)}  // Allow typing only if enabled
+        placeholder="Search vehicle number..."
+        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        readOnly={!isSearchEnabled}  // Prevent typing unless enabled
+      />
+      <Search
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        size={20}
+      />
+    </div>
+    <button
+      type="button"
+      onClick={() => setIsSearchEnabled(true)}  // Enable search on click
+      className="ml-2 p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+      aria-label="Edit vehicle"
+    >
+      <Edit2 size={16} />
+    </button>
+  </div>
 
-            {loading && (
-              <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              </div>
-            )}
+  {loading && (
+    <div className="absolute right-10 top-1/2 -translate-y-1/2">
+      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+    </div>
+  )}
 
-            {vehicles.length > 0 && (
-              <ul className="absolute z-10 bg-white border border-gray-200 shadow-lg rounded-lg w-full mt-1 max-h-48 overflow-y-auto">
-                {memoizedVehicles}
-              </ul>
-            )}
-          </div>
+  {isSearchEnabled && vehicles.length > 0 && (
+    <ul className="absolute z-10 bg-white border border-gray-200 shadow-lg rounded-lg w-full mt-1 max-h-48 overflow-y-auto">
+      {memoizedVehicles}
+    </ul>
+  )}
+</div>
+
 
       <div className="flex justify-end gap-3 mt-6">
             <button

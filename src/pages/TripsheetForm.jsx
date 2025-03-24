@@ -330,7 +330,7 @@ useEffect(() => {
           dropAddress: "",
           acType: "",
           reportingTime: "",
-          driverPh:""
+         
         });
       }
     } catch (error) {
