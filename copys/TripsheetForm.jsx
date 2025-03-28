@@ -17,11 +17,7 @@ const TripSheetForm = () => {
     const[searchCompany,setSearchCompany]=useState("")
     const[companys, setCompanies]=useState([])
   
-    const [categoryOptions, setCategoryOptions] = useState([
-      { value: "", label: "Select a Category" },
-      { value: "Corporate", label: "Corporate" },
-  
-    ]);
+    const [categoryOptions, setCategoryOptions] = useState([ ]);
 
     
     const vehicleDetailsInput = [
@@ -33,7 +29,7 @@ const TripSheetForm = () => {
       { id: "category", label: "Category", type: "select", required: true, name: "category", options: categoryOptions },
     ];
     const passengerInput = [
-      { id: "passengerName", label: "Customer Name", placeholder: "Enter passenger name", type: "select", required: true, name: "customer" ,options: customerOption},
+      { id: "passengerName", label: "Passenger", placeholder: "Enter passenger name", type: "select", required: true, name: "customer" ,options: customerOption},
       { id: "customerPh", label: "Phone Number", placeholder: "Phone Number", type: "tel", required: true, name: "customerPh" },
       { id: "reportingAddress", label: "Reporting Address", placeholder: "Reporting Address", type: "text", required: true, name: "reportingAddress" },
       { id: "dropAddress", label: "Drop Address", placeholder: "Drop Address", type: "text", required: true, name: "dropAddress" },
@@ -52,6 +48,8 @@ const TripSheetForm = () => {
       dropAddress: "",
       acType: "",
       reportingTime: "",
+     
+      
       // "createdAt": "2025-02-18T04:13:56.554Z"
      
     });
@@ -93,11 +91,32 @@ const TripSheetForm = () => {
   
   
   
+
+
+const fetchCategory = async () => {
+  try {
+    const response = await LocalClient.get("fetchCategory");
+    if (response.status === 200) {
+      const formattedCategories = response.data.map((category) => ({
+        value: category.name, // Use id for value
+        label: category.name, // Use name for label
+      }));
+      setCategoryOptions([{ value: "", label: "Select a Category" }, ...formattedCategories]);
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
+};
+
+useEffect(() => {
+  fetchCategory();
+}, []);
+
     //  driver dropdown logic 
     useEffect(() => {
       const driverOptions = drivers.map((driver) => ({
-        value: driver.driverName,
-        label: driver.driverName,
+        value: driver.name,
+        label: driver.name
   
       }));
       setOptions([{ value: "", label: "Select a driver" }, ...driverOptions]);
@@ -107,11 +126,11 @@ const TripSheetForm = () => {
     
     useEffect(() => {
       const  customerOptions = customer.map((customer) => ({
-        value: customer.customerName,
-        label: customer.customerName,
+        value: customer.name,
+        label: customer.name,
   
       }));
-     setCustomerOption([{ value: "", label: "Select a customer" }, ...customerOptions]);
+     setCustomerOption([{ value: "", label: "Select a Passenger" }, ...customerOptions]);
      console.log(" this is the array of customers",customerOptions);
      
     }, [customer]); 
@@ -143,10 +162,11 @@ const TripSheetForm = () => {
       if (name=="driver") {
         console.log("this is the driver" ,value);
         setDriverName(value)
-      }
-
-
-  
+      }    
+      if (name=="category") {
+        console.log("this is the category" ,name ,value);
+      }    
+      
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -159,7 +179,7 @@ const TripSheetForm = () => {
     get the driver phoen and vendor related to the driver */
     useEffect(()=>{
   
-   const driver = drivers.find((d) => d.driverName === driverName);
+   const driver = drivers.find((d) => d.name === driverName);
   
    console.log(" this is the  method inside the useeffect to get the driver phoen and vendor related to the driver ");
      
@@ -174,9 +194,9 @@ const TripSheetForm = () => {
       /* this is the  method  to get the customer Ph */
     useEffect(()=>{
   
-      const  found= customer.find((d)=> d.customerName === data.customer)
+      const  found= customer.find((d)=> d.name === data.customer)
 
-         let customerPh = found && found.phoneNo? found.phoneNo : "phone notfound";
+         let customerPh = found && found.phoneNo? found.phoneNo : "";
          setFormData((prev) => ({
            ...prev,
            customerPh:customerPh || ""
@@ -192,7 +212,9 @@ const TripSheetForm = () => {
     const handleDataAuto = (vehicle) => {
       const { vehicleNo, vehicleType, vendor, drivers } = vehicle;
       
-      const vendorName = vendor?.vendorName || ""; // Handle cases where vendor might be null
+      console.log(" this is the selectedd vehicle " ,vehicle);
+      
+      const vendorName = vendor?.name || ""; // Handle cases where vendor might be null
     
       setSearch(vehicleNo);
       setVehicles([]);
@@ -202,13 +224,15 @@ const TripSheetForm = () => {
         ...prev,
         vehicleType: vehicleType || "",
         vehicle: vehicleNo || "",
-        vendorName: vendorName, // ✅ Cleaner vendorName assignment
+        vendorName: vendorName,
+        vehicleId:vehicle.id
+        // ✅ Cleaner vendorName assignment
       }));
     };
     
   
      const  handleCompanyAutoFill=(company)=>{    
-      setSearchCompany(company.companyName);
+      setSearchCompany(company.name);
   
       console.log(" this is the comapany customers " ,company.customers);
       
@@ -219,7 +243,7 @@ const TripSheetForm = () => {
       
       setFormData((prev)=>({
         ...prev,
-        company:company.companyName || ""
+        company:company.name || ""
       }))
      }
 
@@ -252,44 +276,76 @@ const TripSheetForm = () => {
   };
   
   const generateLink = async () => {
-    console.log(" this is the  request data ",data);
+    console.log("This is the request data", data);
+  
+    // Validation
+    const requiredFields = [
+      { key: "driver", label: "Driver Name" },
+      { key: "driverPh", label: "Driver Phone" },
+      { key: "vendorName", label: "Vendor Name" },
+      { key: "vehicle", label: "Vehicle" },
+      { key: "vehicleType", label: "Vehicle Type" },
+      { key: "company", label: "Company" },
+      { key: "customer", label: "Customer Name" },
+      { key: "customerPh", label: "Customer Phone" },
+      { key: "reportingAddress", label: "Reporting Address" },
+      { key: "dropAddress", label: "Drop Address" },
+      { key: "acType", label: "AC Type" },
+      { key: "reportingTime", label: "Reporting Time" },
+      { key: "category", label: "Category" }
+      
+    ];
+  
+    const missingFields = requiredFields.filter(field => !data[field.key]);
+  
+    if (missingFields.length > 0) {
+      missingFields.forEach(field => toast.error(`${field.label} is required`));
+      return;
+    }
+
+    console.log(" the request data ",data);
+    
+  
     try {
       const res = await LocalClient.post("/generate-link", data);
       const link = `${window.location.origin}/driver-form?formId=${res.data.data.formId}`;
-      console.log(" this is the responce ",res);
-     
+      console.log("This is the response", res);
+  
       setGeneratedLink(link);
-
-
-      if (res.status===201) {
-       toast.success(" TripSheet Created ")
-        setSearch("")
-        setSearchCompany("")
-       setFormData({
-        driver: "",
-        driverPh: "",
-        vendorName: "",
-        vehicle: "",
-        vehicleType: "",
-        company:"",
-        customer:"",
-        customerPh: "",
-        reportingAddress: "",
-        dropAddress: "",
-        acType: "",
-        reportingTime: "",
-      })
+  
+      if (res.status === 201) {
+        toast.success("Trip Sheet Created");
+        setSearch("");
+        setSearchCompany("");
+        setFormData({
+          driver: "",
+          driverPh: "",
+          vendorName: "",
+          vehicle: "",
+          vehicleType: "",
+          company: "",
+          customer: "",
+          customerPh: "",
+          reportingAddress: "",
+          dropAddress: "",
+          acType: "",
+          reportingTime: "",
+         
+        });
       }
     } catch (error) {
-
-      console.log(" An error occured ",error);
-      
-      
-    }}
+      console.log("An error occurred", error);
+      toast.error("Failed to generate trip sheet");
+    }
+  };
+  
 
    const handleNavigarion=()=>{
     navigate("/tripsheet-list")
   }
+  const readOnlyFields = ["customerPh", "driverPh","vendorName","vehicleType"];
+
+  
   return (
 <>
       {/* Header */}
@@ -318,6 +374,12 @@ const TripSheetForm = () => {
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <button 
+      onClick={() => setShowVehicleModal(true)}
+      className="px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+    >
+      +
+    </button>
           </div>
 
           {loading && (
@@ -359,6 +421,7 @@ const TripSheetForm = () => {
                     placeholder={input.label}
                     value={data[input.name] || ""}
                     onChange={handleInputChange}
+                    readOnly={readOnlyFields.includes(input.name)} 
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -436,7 +499,7 @@ const TripSheetForm = () => {
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
                   >
                     <Building2 size={16} className="text-gray-500" />
-                    <span>{company.companyName}</span>
+                    <span>{company.name}</span>
                   </li>
                 ))}
               </ul>
@@ -461,6 +524,7 @@ const TripSheetForm = () => {
                     placeholder={input.placeholder}
                     value={data[input.name] || ""}
                     onChange={handleInputChange}
+                    readOnly={readOnlyFields.includes(input.name)}  
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -490,7 +554,7 @@ const TripSheetForm = () => {
 <div className="flex justify-end pt-4">
   {!generatedLink ? (
     <div className="mt-5">
-      <button 
+      <button   
         className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors"
         onClick={generateLink}
       >
@@ -540,24 +604,3 @@ const TripSheetForm = () => {
 
 export default TripSheetForm;
 
-
-
-
-const fetchCategory = async () => {
-  try {
-    const response = await LocalClient.get("fetchCategory");
-    if (response.status === 200) {
-      const formattedCategories = response.data.map((category) => ({
-        value: category.id, // Use id for value
-        label: category.name, // Use name for label
-      }));
-      setCategoryOptions(formattedCategories);
-    }
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-  }
-};
-
-useEffect(() => {
-  fetchCategory();
-}, []);
