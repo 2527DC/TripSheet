@@ -14,7 +14,7 @@ const formatDate = (isoDate) => {
 };
 
 const handleDownloadExcel = (data) => {
-  console.log("Download Excel clicked");
+  console.log("Download Excel clicked",data);
 
   // Define custom headers
   const customHeaders = [
@@ -38,9 +38,13 @@ const handleDownloadExcel = (data) => {
     "Total Km",
     "Open Hr",
     "Close Hr",
+    "Closeing Date",
     "Total Hr",
+    "Extar Km",
+    "Extar Hm",
     "Parking Charges",
     "Toll Charges",
+
   ];
 
   // Transform data to match the headers, with formatted date
@@ -65,8 +69,11 @@ const handleDownloadExcel = (data) => {
     item.totalKm,
     item.openHr,
     item.closeHr,
+    item.closingDate,
     item.totalHr,
-    item.parkingCharges,
+    item.extraKm,
+    item.extraHr,
+    item.parkingCharges===null?"NaN":item.parkingCharges,
     item.toolCharges,
   ]);
 

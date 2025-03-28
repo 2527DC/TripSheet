@@ -30,8 +30,6 @@ const DriverView = () => {
 
 
 
-
-
     useEffect(() => {
       const fetchTripDetails = async () => {
         if (tripId) {
@@ -41,8 +39,6 @@ const DriverView = () => {
             if (response.status===200) {
               setvisible(true)
               setTripDetails(response.data.data)
-              console.log(" this is the Driver View data " ,response.data.data);
-              
               
               console.log(" this is the data ", tripDetails);
             }
@@ -55,11 +51,7 @@ const DriverView = () => {
   
       fetchTripDetails();
     }, [tripId]);
-
-    const openDate = tripDetails?.createdAt && !isNaN(new Date(tripDetails.createdAt).getTime()) 
-    ? new Date(tripDetails.createdAt).toISOString().split("T")[0] 
-    : null;
-    
+  
 
     const [data, setFormData] = useState({
         openKm: "",
@@ -75,8 +67,48 @@ const DriverView = () => {
 
 
     const [guestSignature, setGuestSignature] = useState(null);
+    
+    // Convert 12-hour time format (hh:mm AM/PM) to minutes since start of the day
+    const convertToMinutes = (time) => {
+      if (!time) return null;
+    
+      const [hours, minutes] = time.split(":").map(Number);
+      return hours * 60 + minutes; // Convert to total minutes
+    };
+    
 
-   
+    const calculateTotalHours = (openHr, closeHr) => {
+      const openTime = convertToMinutes(openHr);
+      const closeTime = convertToMinutes(closeHr);
+    
+      if (openTime === null || closeTime === null) return ""; // Return empty if missing values
+    
+      let totalMinutes;
+      
+      if (closeTime >= openTime) {
+        totalMinutes = closeTime - openTime; // Normal case
+      } else {
+        totalMinutes = closeTime + (24 * 60 - openTime); // If closing time is after midnight
+      }
+    
+      if (totalMinutes <= 0) {
+        return ""; // Return empty if negative time detected
+      }
+    
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+    
+      return `${hours}:${minutes.toString().padStart(2, "0")}`;
+    };
+    
+// Update totalHr whenever openHr or closeHr changes
+useEffect(() => {
+  const totalHours = calculateTotalHours(data.openHr, data.closeHr);
+  setFormData((prevData) => ({
+    ...prevData,
+    totalHr: totalHours,
+  }));
+}, [data.openHr, data.closeHr]);
 
 
 const handleInputChange = (e) => {
@@ -114,59 +146,29 @@ const handleInputChange = (e) => {
         toast.warning("Closing Km Must be greater than Opening Km");
         return false;
       }
-    
-
-      const result = calculateTripMetrics();
-
-      console.log(`Total KM: ${result.totalKm}`);
-      console.log(`Total HR: ${result.totalHr}:${result.totalMin} hours`);
-
-      if (!result) {
+  
+      // Validate time logic
+      const totalHours = calculateTotalHours(data.openHr, data.closeHr);
+      if (!totalHours) {
         toast.warning("Closing time must be later than opening time");
         return false;
       }
   
       return true;
     };
-
-
-    function calculateTripMetrics() {
-      // Convert openDate to YYYY-MM-DD format if needed (from DD-MM-YYYY)
-      console.log(" this is the date of the opendate",openDate);
-      
   
-      // Create Date objects
-      const openDateTime = new Date(`${openDate}T${data.openHr}:00`);
-      const closeDateTime = new Date(`${data.closeDate}T${data.closeHr}:00`);
-  
-      // Calculate total KM
-      const totalKm = data.closeKm - data.openKm;
-  
-      // Calculate total hours (difference in milliseconds converted to hours)
-     // Convert to hours and minutes
-     const diffMs = closeDateTime - openDateTime;
-    const totalHr = Math.floor(diffMs / (1000 * 60 * 60)); // Get full hours
-    const totalMin = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); // Get remaining minutes
-
-  
-      return { totalKm, totalHr,totalMin };
-  }
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm())return
-   const {categoryRel} =tripDetails
-console.log(" this is the category to calculate the ectar hr and  " ,categoryRel.KM ,categoryRel.hours);
+
 
     const formData = {
         ...data,
         Guestsignature: guestSignature,
-        categoryHr:categoryRel.hours,
-        categoryKm:categoryRel.KM
-        
+        totalKm: Number(data.openKm) + Number(data.closeKm),
     };
-
 
     console.log("Data being sent:", formData);
 
@@ -205,20 +207,8 @@ const handleRatingChange = (newRating) => {
     }));
 };
 
-// Update totalHr whenever openHr or closeHr changes
-useEffect(() => {
-  const result = calculateTripMetrics();
-  
-  setFormData((prevData) => ({
-    ...prevData,
-    totalHr: `${result.totalHr}:${result.totalMin}`, // Keep totalHr as a string
-    totalKm: parseFloat(result.totalKm) || 0, // Ensure totalKm is a float
-  }));
-}, [data.openHr, data.closeHr]);
-
 
     return<>
-
     {visible?( <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
@@ -311,7 +301,7 @@ useEffect(() => {
             <input
               type="date"
               className="flex-1 rounded-md border border-gray-300 px-3 py-2 bg-gray-200 cursor-not-allowed"
-              value={openDate}
+              value={data.openDate}
               readOnly
             />
           </div>
