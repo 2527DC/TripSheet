@@ -9,6 +9,10 @@ import { toast } from "react-toastify";
 const ManageAdmins = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [formData, setFormData] = useState({
     adminName: "",
@@ -98,6 +102,8 @@ const ManageAdmins = () => {
 
   // Delete admin
   const handleDelete = async (id) => {
+    console.log(" this si sthe admin id " ,id);
+    
     if (window.confirm("Are you sure you want to delete this admin?")) {
       try {
         const response = await LocalClient.delete(`${API.deleteAdmin}/${id}`);
@@ -111,7 +117,12 @@ const ManageAdmins = () => {
     }
   };
 
-  // Error handling helper
+  const handleResetPassword = (admin) => {
+    setSelectedAdmin(admin);  // Store the selected admin
+    setIsPasswordOpen(true);
+  };
+
+// Error handling helper
   const handleError = (error) => {
     console.error("Error:", error);
     if (!error.response) {
@@ -124,6 +135,34 @@ const ManageAdmins = () => {
       toast.error("Something went wrong. Please try again.");
     }
   };
+
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    setError('');
+    console.log(" this is the resset password details ",{adminId:selectedAdmin.id,
+      password
+    });
+    
+    try {
+      const response = await LocalClient.patch(API.updatePassword,{adminId:selectedAdmin.id,
+        password
+      })
+      setIsPasswordOpen(false)
+      setPassword(""),
+      setSelectedAdmin(null)
+      setConfirmPassword("")
+     toast.success("Updated password Successfuly")
+    } catch (error) {
+      console.error('Error updating password:', error);
+      setError('An error occurred. Please try again.');
+    }
+  };
+
 
   return (
     <div>
@@ -157,13 +196,7 @@ const ManageAdmins = () => {
                     <td className="px-4 py-2">{admin.email}</td>
                     <td className="px-4 py-2">{admin.role}</td>
                     <td className="px-4 py-2 flex gap-2">
-                      <button
-                        onClick={() => handleEdit(admin)}
-                        className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
-                        title="Edit Admin"
-                      >
-                        <Edit size={18} />
-                      </button>
+                    
                       <button
                         onClick={() => handleDelete(admin.id)}
                         className="p-1 text-red-600 hover:text-red-800 transition-colors"
@@ -253,6 +286,47 @@ const ManageAdmins = () => {
           </div>
         </form>
       </Modal>
+
+
+       {/*Chanage  password*/}
+       <Modal isOpen={isPasswordOpen} onClose={()=>setIsPasswordOpen(false)} title="Change Password">
+      <form onSubmit={handleUpdatePassword} className="space-y-6">
+        <InputField
+          label="New Password"
+          type="password"
+          name="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter new password"
+          required
+        />
+        <InputField
+          label="Confirm Password"
+          type="password"
+          name="confirmPassword"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirm new password"
+          required
+        />
+        {error && <p className="text-red-500">{error}</p>}
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            type="button"
+            onClick={()=>setIsPasswordOpen(false)}
+            className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Update Password
+          </button>
+        </div>
+      </form>
+    </Modal>
     </div>
   );
 };
