@@ -887,7 +887,7 @@ const memoizedFormVendors = useMemo(() => (
           <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
-              onClick={() => setIsVendorModalOpen(false)}
+              onClick={() => setDriverModal(false)}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
@@ -948,7 +948,7 @@ const memoizedFormVendors = useMemo(() => (
           <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => setIsVendorModalOpen(false)}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel

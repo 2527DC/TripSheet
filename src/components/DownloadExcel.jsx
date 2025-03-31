@@ -41,7 +41,7 @@ const handleDownloadExcel = (data) => {
     "Closeing Date",
     "Total Hr",
     "Extar Km",
-    "Extar Hm",
+    "Extar Hr",
     "Parking Charges",
     "Toll Charges",
 

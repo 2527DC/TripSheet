@@ -127,7 +127,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
             <h2 className="text-xl font-bold">Trip Management</h2>
             {!isMobile && (
               <button onClick={togglePin} className="text-gray-400 hover:text-white">
-                {isPinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
+                {isPinned ? <Pin color='white' className="w-4 h-4" /> : <PinOff  color='white' className="w-4 h-4" />}
               </button>
             )}
           </>
