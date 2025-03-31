@@ -12,14 +12,11 @@ import TripSheetForm from "./pages/TripsheetForm";
 import { Menu } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ManageDrivers from "./pages/ManageDrivers";
-
-import TripForm from "./components/TripForm";
 import TripSheet from "./components/TripSheet";
 import ManageVendor from "./pages/ManageVendor";
 import DutySlip from "./components/DutySlip";
 import DriverView from "./pages/DriverView";
 import ManageAdmins from "./pages/ManageAdmins";
-import ParentComponent from "./components/ParentComponent";
 import ManageCategory from "./components/ManangeCategory";
 
 
@@ -27,7 +24,7 @@ import ManageCategory from "./components/ManangeCategory";
 
 export  const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const mainContentRef = useRef(null);
 
   // Handle clicks outside sidebar on mobile to close it

@@ -3,12 +3,10 @@ import { hasPermission } from '../utils/auth';
 import { ROLES } from '../utils/auth';
 import { 
   Users, Truck, Calendar, Building2, 
-  LayoutDashboard, LogOut, User as UserIcon, 
-  ChevronDown, UserCog, UserPlus, Users2,
+ LogOut, 
+  ChevronDown, 
   Pin, PinOff,
-  CarTaxiFront,
-  Car,
-  RouteIcon,
+
   PersonStanding,
   CassetteTape
 } from 'lucide-react';
