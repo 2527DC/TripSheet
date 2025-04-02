@@ -56,18 +56,18 @@ const DriverView = () => {
       fetchTripDetails();
     }, [tripId]);
 
-    const openDate = tripDetails?.createdAt && !isNaN(new Date(tripDetails.createdAt).getTime()) 
-    ? new Date(tripDetails.createdAt).toISOString().split("T")[0] 
-    : null;
-    
+    // const openDate = tripDetails?.createdAt && !isNaN(new Date(tripDetails.createdAt).getTime()) 
+    // ? new Date(tripDetails.createdAt).toISOString().split("T")[0] 
+    // : null;
+    const today = new Date().toISOString().split("T")[0]; 
 
     const [data, setFormData] = useState({
         openKm: "",
         openHr: "",
         closeKm: "",
         closeHr: "",
-       formId:tripId,
-       totalHr:"",
+        formId:tripId,
+        totalHr:"",
     
        toolCharges:null,
        parkingCharges:null
@@ -132,11 +132,11 @@ const handleInputChange = (e) => {
 
     function calculateTripMetrics() {
       // Convert openDate to YYYY-MM-DD format if needed (from DD-MM-YYYY)
-      console.log(" this is the date of the opendate",openDate);
+      // console.log(" this is the date of the opendate",openDate);
       
   
       // Create Date objects
-      const openDateTime = new Date(`${openDate}T${data.openHr}:00`);
+      const openDateTime = new Date(`${tripDetails?.reportingDate}T${data.openHr}:00`);
       const closeDateTime = new Date(`${data.closeDate}T${data.closeHr}:00`);
   
       // Calculate total KM
@@ -157,7 +157,7 @@ const handleInputChange = (e) => {
     e.preventDefault();
     if (!validateForm())return
    const {categoryRel} =tripDetails
-console.log(" this is the category to calculate the ectar hr and  " ,categoryRel.KM ,categoryRel.hours);
+   console.log(" this is the category to calculate the ectar hr and  " ,categoryRel.KM ,categoryRel.hours);
 
     const formData = {
         ...data,
@@ -167,7 +167,6 @@ console.log(" this is the category to calculate the ectar hr and  " ,categoryRel
         
     };
 
-
     console.log("Data being sent:", formData);
 
     try {
@@ -176,7 +175,7 @@ console.log(" this is the category to calculate the ectar hr and  " ,categoryRel
 
         if (response.status===200) {
            toast.success("Submitted successfully!");
-            setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" , toolCharges:"",
+            setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" , toolCharges:"",closeDate:"",
               parkingCharges:""});
             setGuestSignature(null);
             setRating(0)
@@ -214,7 +213,7 @@ useEffect(() => {
     totalHr: `${result.totalHr}:${result.totalMin}`, // Keep totalHr as a string
     totalKm: parseFloat(result.totalKm) || 0, // Ensure totalKm is a float
   }));
-}, [data.openHr, data.closeHr]);
+}, [data.openHr, data.closeHr,data.closeDate]);
 
 
     return<>
@@ -311,7 +310,7 @@ useEffect(() => {
             <input
               type="date"
               className="flex-1 rounded-md border border-gray-300 px-3 py-2 bg-gray-200 cursor-not-allowed"
-              value={openDate}
+              value={tripDetails.reportingDate ?tripDetails.reportingDate : ""}
               readOnly
             />
           </div>
@@ -350,7 +349,8 @@ useEffect(() => {
               className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={data.closeDate}
               onChange={handleInputChange}
-            />
+              min={today} // Prevents selecting past dates
+                />
           </div>
           <div className="flex flex-col md:flex-row md:items-center gap-2">
             <label className="w-32 font-medium text-gray-700">Hours:</label>
