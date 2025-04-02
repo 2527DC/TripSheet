@@ -24,8 +24,8 @@ const TripSheetForm = () => {
       { id: "vehicleType", label: "Vehicle Type", type: "text", required: true, name: "vehicleType" ,},
       { id: "driver", label: "Driver Name", type: "select", required: true, name: "driver", options: options, },
       { id: "driver_ph", label: "Driver Ph", type: "tel", required: true, name: "driverPh" },
-  
-      { id: "reportingTime", label: "Reporting Time", type: "time", required: true, name: "reportingTime" },
+      { id: "reportingDate", label: "Reporting Date", type: "date", required: true, name: "reportingDate" },
+      { id: "reportingTime", label: "Reporting Time", type: "time", required: true, name: "reportingTime"},
       { id: "category", label: "Category", type: "select", required: true, name: "category", options: categoryOptions },
       {id: "city", label: "City",type: "text",required: true,name: "city",},
     ];
@@ -57,7 +57,8 @@ const TripSheetForm = () => {
       acType: "",
       reportingTime: "",
       city:"",
-      companyId:""
+      companyId:"",
+      reportingDate:""
      
       
       // "createdAt": "2025-02-18T04:13:56.554Z"

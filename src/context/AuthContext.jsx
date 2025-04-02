@@ -52,7 +52,15 @@ export const AuthProvider = ({ children }) => {
   
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
+  
+    // Redirect to login
+    window.location.href = "/login";
+  
+    // Clear browser history to prevent going back
+    setTimeout(() => {
+      window.history.replaceState(null, "", "/login");
+    }, 0);
   };
 
   return (
