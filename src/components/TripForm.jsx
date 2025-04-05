@@ -237,7 +237,7 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         setAssignedTrip(response.data.data);
     
         // Open the modal or show the component
-        setAssignedModal(true);
+      
     
         console.log("Assigned trips fetched and modal opened");
       } catch (error) {
@@ -307,10 +307,19 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
     };
   }, [searchQuery, selectedType, selectedSearch]);
     
+  const handleAssignedTrips = () => {
+    if (assignedModal) {
+      fetchedAssignedTrip(); // if modal is already open, refresh data
+    } else {
+      setAssignedModal(true); // just open modal
+      fetchedAssignedTrip();  // and fetch fresh data
+    }
+  };
+  
     // Memoized status buttons
     const statusButtons = useMemo(() => [
       {
-        onClick: fetchedAssignedTrip,
+        onClick: handleAssignedTrips,
         Icon: Clock,
         text: "Assigned",
         colorClass: "text-blue-600 bg-blue-100"
@@ -523,7 +532,7 @@ const dummyTrips = [
 const AssignedTripList = React.memo(({ trips = dummyTrips }) => {
   // Memoized list (already all are "Not Started")
   const renderedTrips = useMemo(() => {
-    return trips.map((trip, index) => (
+    return trips?.map((trip, index) => (
       <tr key={index} className=" hover:bg-gray-50">
         <td className="px-4 py-2">{new Date(trip.date).toLocaleDateString()}</td>
         <td className="px-4 py-2">{trip.customer}</td>
