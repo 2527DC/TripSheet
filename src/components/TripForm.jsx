@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { TripList } from "./Trips";
-import { CheckCircle, Clock, FileSpreadsheet, History, Plus, Search, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Clock, Clock10, FileSpreadsheet, History, Plus, Search, Truck, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LocalClient } from "../Api/API_Client";
 import TripDetails from "./TripDetails";
@@ -226,7 +226,25 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
    
     }, []);
 
-
+    const [assignedModal, setAssignedModal] = useState(false); // controls modal visibility
+    const [assignedTrips, setAssignedTrip] = useState(null);   // stores the trip data
+    
+    const fetchedAssignedTrip = useCallback(async () => {
+      try {
+        const response = await LocalClient.get("/getAssigned");
+    
+        // Set trip data
+        setAssignedTrip(response.data.data);
+    
+        // Open the modal or show the component
+        setAssignedModal(true);
+    
+        console.log("Assigned trips fetched and modal opened");
+      } catch (error) {
+        console.error("Error fetching assigned trips:", error);
+      }
+    }, []);
+    
 
     const fetchedRejectedTrip = useCallback(async () => {
       try {
@@ -292,6 +310,12 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
     // Memoized status buttons
     const statusButtons = useMemo(() => [
       {
+        onClick: fetchedAssignedTrip,
+        Icon: Clock,
+        text: "Assigned",
+        colorClass: "text-blue-600 bg-blue-100"
+      },
+      {
         onClick: fetchedPendingTrip,
         Icon: Clock,
         text: "Pending",
@@ -309,7 +333,7 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         text: "Rejected",
         colorClass: "text-red-600 bg-red-50"
       }
-    ], [fetchedPendingTrip, fetchedApprovedTrips, fetchedRejectedTrip]);
+    ], [fetchedPendingTrip, fetchedAssignedTrip,fetchedApprovedTrips, fetchedRejectedTrip]);
 
   return (<>
     {!selectedTrip?(
@@ -450,24 +474,7 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
       </div>
  
   
-        {/* <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={"EDIT History"}> */}
-      {/* ✅ Make the history scrollable */}
-      {/* <div className="max-h-[400px] overflow-y-auto p-4">
-        {auditLogs.map((log) => (
-          <div key={log.id} className="mb-2">
-                <p className="text-sm text-gray-700"> 
-                For <span className="font-semibold m-1"> TripSheetId  </span>  
-               <span className="font-semibold text-red-500 m-1">"{log.tripSheetId}"</span> 
-              <span className="font-semibold">{log.editedBy}</span> changed  
-              <span className="font-semibold"> {log.fieldName} </span> 
-              from "<span className="text-red-500">{log.oldValue}</span>" 
-              to "<span className="text-green-500">{log.newValue}</span>"  
-              on <span className="text-gray-500">{new Date(log.editedAt).toLocaleString()}</span>
-                  </p>
-                </div>
-              ))}
-            </div> */}
-          {/* </Modal> */}
+  
 
           <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={"EDIT History"}>
             <div className="max-h-[400px] overflow-y-auto p-4">
@@ -481,9 +488,11 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
           <div className="bg-white rounded-xl shadow-sm p-6">
              {loading ? (
               <LoadingSpinner />
-            ) : (
-              <MemoizedTripList trips={trips} setSelectedTrip={setSelectedTrip} />
-            )}
+            ) : (<>
+             {  assignedModal?<AssignedTripList trips={assignedTrips} />:<MemoizedTripList trips={trips} setSelectedTrip={setSelectedTrip} />}  
+            </>
+          
+            )}  
           </div>
         </div>
       ) : (
@@ -496,6 +505,69 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
     </>
   );
 }
+// Dummy data: all trips are "Not Started"
+const dummyTrips = [
+  { date: '2025-04-05T08:00:00Z', passengerName: 'Alice Johnson', vehicleNo: 'MH12AB1001', openKm: null },
+  { date: '2025-04-05T08:30:00Z', passengerName: 'Bob Smith', vehicleNo: 'MH12AB1002', openKm: 210 },
+  { date: '2025-04-05T09:00:00Z', passengerName: 'Carol White', vehicleNo: 'MH12AB1003', openKm: null },
+  { date: '2025-04-05T09:30:00Z', passengerName: 'David Lee', vehicleNo: 'MH12AB1004', openKm: 180 },
+  { date: '2025-04-05T10:00:00Z', passengerName: 'Ella Brown', vehicleNo: 'MH12AB1005', openKm: null },
+  { date: '2025-04-05T10:30:00Z', passengerName: 'Frank Martin', vehicleNo: 'MH12AB1006', openKm: 230 },
+  { date: '2025-04-05T11:00:00Z', passengerName: 'Grace Thomas', vehicleNo: 'MH12AB1007', openKm: null },
+  { date: '2025-04-05T11:30:00Z', passengerName: 'Henry Young', vehicleNo: 'MH12AB1008', openKm: 240 },
+  { date: '2025-04-05T12:00:00Z', passengerName: 'Ivy Wilson', vehicleNo: 'MH12AB1009', openKm: null },
+  { date: '2025-04-05T12:30:00Z', passengerName: 'Jack Davis', vehicleNo: 'MH12AB1010', openKm: 200 },
+];
+
+// AssignedTripList component wrapped in React.memo for performance
+const AssignedTripList = React.memo(({ trips = dummyTrips }) => {
+  // Memoized list (already all are "Not Started")
+  const renderedTrips = useMemo(() => {
+    return trips.map((trip, index) => (
+      <tr key={index} className=" hover:bg-gray-50">
+        <td className="px-4 py-2">{new Date(trip.date).toLocaleDateString()}</td>
+        <td className="px-4 py-2">{trip.customer}</td>
+        <td className="px-4 py-2">{trip.driverName}</td>
+        <td className="px-4 py-2">{trip.vehicleNo}</td>
+        <td className="px-4 py-2">
+        <span
+  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs 
+    ${
+      trip.openKm
+        ? 'bg-green-200 text-green-800'
+        : 'bg-red-200 text-red-800'
+    }`}
+>
+  {trip.openKm ? (
+    <Clock10 size={14} className="text-green-600" />
+  ) : (
+    <Clock10 size={14} className="text-red-600" />
+  )}
+  {trip.openKm ? 'Duty Started' : 'Not Started'}
+</span>
+
+        </td>
+      </tr>
+    ));
+  }, [trips]);
+
+  return (
+    <div className=" rounded-lg shadow bg-white max-h-[400px] overflow-y-auto border">
+      <table className="min-w-full text-sm text-left">
+        <thead className="bg-gray-100 sticky top-0 z-10">
+          <tr>
+            <th className="px-4 py-2">Date</th>
+            <th className="px-4 py-2">Passenger Name</th>
+            <th className="px-4 py-2">Driver Name</th>
+            <th className="px-4 py-2">Vehicle No</th>
+            <th className="px-4 py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>{renderedTrips}</tbody>
+      </table>
+    </div>
+  );
+});
 
 
 // Memoized child components
