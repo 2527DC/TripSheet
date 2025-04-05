@@ -75,6 +75,12 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     //   roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ]
     // },
     {
+      path: '/tripsheet-list',
+      name: 'Dashboard',
+      icon: Calendar,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    },
+    {
       path: '/manage-admins',
       name: 'Admins',
       icon: PersonStanding,
@@ -98,12 +104,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       icon: Truck,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN,]
     },
-    {
-      path: '/tripsheet-list',
-      name: 'TripSheet',
-      icon: Calendar,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
-    },
+   
     {
       path: '/vendors',
       name: 'Vendors',

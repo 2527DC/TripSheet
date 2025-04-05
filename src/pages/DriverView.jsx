@@ -10,6 +10,7 @@ const DriverView = () => {
     const location = useLocation();
     const [visible,setvisible]=useState(false)
 
+
     // Extract the tripId from the URL
     const queryParams = new URLSearchParams(location.search);
     const tripId = queryParams.get('formId');
@@ -17,20 +18,43 @@ const DriverView = () => {
      // Signature states and refs
     const [showGuestModal, setShowGuestModal] = useState(false);
 
-
-      const guestSignatureRef = useRef(null);
+    const guestSignatureRef = useRef(null);
      
+
+
     // Signature handling functions
-    const handleSaveGuestSignature = () => {
-      if (!guestSignatureRef.current.isEmpty()) {
-          setGuestSignature(guestSignatureRef.current.toDataURL());
+    const handleSaveGuestSignature = async (e) => {
+      e.preventDefault(); // Add this line
+      if (guestSignatureRef.current.isEmpty()) {
+        toast.warning("Please provide a signature before saving.");
+        return false;
       }
-      setShowGuestModal(false);
-  };
-
-
-
-
+    
+      const signatureDataURL = guestSignatureRef.current.toDataURL();
+      setGuestSignature(signatureDataURL); // async — doesn't update immediately
+    
+      try {
+        const response = await LocalClient.patch("/updateGuestSignature", {
+          tripId,
+          Guestsignature: signatureDataURL,
+        });
+    
+        if (response.data.success) {
+          toast.success("Guest signature saved successfully.");
+          return signatureDataURL;
+        } else {
+          toast.error(response.data.message || "Failed to save guest signature.");
+          return false;
+        }
+      } catch (error) {
+        console.error("Error while saving guest signature:", error);
+        toast.error("An error occurred while saving the signature.");
+        return false;
+      } finally {
+        setShowGuestModal(false);
+      }
+    };
+    
 
     useEffect(() => {
       const fetchTripDetails = async () => {
@@ -39,12 +63,16 @@ const DriverView = () => {
             const response = await LocalClient.get(`/form/${tripId}`);
           
             if (response.status===200) {
-              setvisible(true)
+                setvisible(true)
               setTripDetails(response.data.data)
-              console.log(" this is the Driver View data " ,response.data.data);
-              
-              
+              console.log(" this is the Driver View data " ,response.data.data); 
               console.log(" this is the data ", tripDetails);
+              if (response.data.data.openKm != null) {
+               setView(true)
+              }
+              if (response.data.data.guest_url!=null) {
+                setGuestSignature(response.data.data.guest_url);
+              }
             }
             setTripDetails(response.data.data);
           } catch (error) {
@@ -56,20 +84,15 @@ const DriverView = () => {
       fetchTripDetails();
     }, [tripId]);
 
-    // const openDate = tripDetails?.createdAt && !isNaN(new Date(tripDetails.createdAt).getTime()) 
-    // ? new Date(tripDetails.createdAt).toISOString().split("T")[0] 
-    // : null;
     const today = new Date().toISOString().split("T")[0]; 
 
     const [data, setFormData] = useState({
-        openKm: "",
-        openHr: "",
+     
         closeKm: "",
         closeHr: "",
         formId:tripId,
         totalHr:"",
-    
-       toolCharges:null,
+        toolCharges:null,
        parkingCharges:null
     });
 
@@ -95,52 +118,15 @@ const handleInputChange = (e) => {
   }));
 };
 
-    
-    const validateForm = () => {
-      const requiredFields = ["openKm", "openHr", "closeKm", "closeHr"];
-      const missingFields = requiredFields.filter((field) => !data[field]);
-  
-    
-      if (missingFields.length > 0) {
-        toast.warning("Please fill all required fields");
-        return false;
-      }
-  
-      if (!guestSignature) {
-        toast.warning("Guest signature is required");
-        return false;
-      }
-      if(data.closeKm< data.openKm){
-        toast.warning("Closing Km Must be greater than Opening Km");
-        return false;
-      }
-    
-
-      const result = calculateTripMetrics();
-
-      console.log(`Total KM: ${result.totalKm}`);
-      console.log(`Total HR: ${result.totalHr}:${result.totalMin} hours`);
-
-      if (!result) {
-        toast.warning("Closing time must be later than opening time");
-        return false;
-      }
-  
-      return true;
-    };
-
-
     function calculateTripMetrics() {
-      // Convert openDate to YYYY-MM-DD format if needed (from DD-MM-YYYY)
-      // console.log(" this is the date of the opendate",openDate);
-      
-  
+
       // Create Date objects
-      const openDateTime = new Date(`${tripDetails?.reportingDate}T${data.openHr}:00`);
+      const openDateTime = new Date(`${tripDetails?.reportingDate}T${tripDetails?.reportingTime}:00`);
       const closeDateTime = new Date(`${data.closeDate}T${data.closeHr}:00`);
+  console.log(" this is the");
   
       // Calculate total KM
-      const totalKm = data.closeKm - data.openKm;
+      const totalKm = data.closeKm - tripDetails?.openKm;
   
       // Calculate total hours (difference in milliseconds converted to hours)
      // Convert to hours and minutes
@@ -153,20 +139,65 @@ const handleInputChange = (e) => {
   }
 
 
+
+
+
+    
+  const validateForm = () => {
+
+    console.log(" making the validation ");
+    
+    const requiredFields = [ "closeKm", "closeHr"];
+    const missingFields = requiredFields.filter((field) => !data[field]);
+
+  
+    if (missingFields.length > 0) {
+      toast.warning("Please fill all required fields");
+
+      return false;
+    }
+
+    if (!guestSignature) {
+      toast.warning("Guest signature is required");
+      return false;
+    }
+    if(data.closeKm<tripDetails?.openKm){
+      toast.warning("Closing Km Must be greater than Opening Km");
+      return false;
+    }
+  
+
+    const result = calculateTripMetrics();
+
+    console.log(`Total KM: ${result.totalKm}`);
+    console.log(`Total HR: ${result.totalHr}:${result.totalMin} hours`);
+
+    if (!result) {
+      toast.warning("Closing time must be later than opening time");
+      return false;
+    }
+
+    return true;
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm())return
+
+    console.log(" the fiunal submit method is getting invoked ");
+    
    const {categoryRel} =tripDetails
    console.log(" this is the category to calculate the ectar hr and  " ,categoryRel.KM ,categoryRel.hours);
 
     const formData = {
         ...data,
-        Guestsignature: guestSignature,
         categoryHr:categoryRel.hours,
         categoryKm:categoryRel.KM
         
     };
 
+    
     console.log("Data being sent:", formData);
 
     try {
@@ -175,7 +206,7 @@ const handleInputChange = (e) => {
 
         if (response.status===200) {
            toast.success("Submitted successfully!");
-            setFormData({ openKm: "", openHr: "", closeKm: "", closeHr: "" , toolCharges:"",closeDate:"",
+            setFormData({  closeKm: "", closeHr: "" , toolCharges:"",closeDate:"",
               parkingCharges:""});
             setGuestSignature(null);
             setRating(0)
@@ -213,12 +244,57 @@ useEffect(() => {
     totalHr: `${result.totalHr}:${result.totalMin}`, // Keep totalHr as a string
     totalKm: parseFloat(result.totalKm) || 0, // Ensure totalKm is a float
   }));
-}, [data.openHr, data.closeHr,data.closeDate]);
+}, [data.closeHr,data.closeDate]);
 
 
+const openKmRef = useRef(null);
+
+
+const handleStartDuty = async () => {
+  try {
+    const kmRaw = openKmRef.current?.value;
+    const kmValue = parseInt(kmRaw, 10);
+
+    if (isNaN(kmValue)) {
+      toast.error("Please enter a valid KM value.");
+      return;
+    }
+
+    const response = await LocalClient.patch("/updateOpenKm", {
+      tripId,
+      kmValue
+    });
+
+    const { success, message, data } = response.data;
+
+    if (success) {
+      toast.success("Duty started successfully.");
+      setView(true);
+      console.log("Updated data:", data);
+    } else {
+      toast.warning(message || "Something went wrong.");
+    }
+
+  } catch (error) {
+    console.error("Error while starting duty:", error);
+
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("Server error. Please try again later.");
+    }
+  }
+};
+
+
+
+const [view,setView]=useState(false)
     return<>
 
-    {visible?( <div className="min-h-screen bg-gray-50 py-8 px-4">
+    {visible?( <>
+    {
+      view?<div>
+        <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
         <header className="flex flex-col md:flex-row items-center p-6 border-b border-gray-200">
@@ -291,41 +367,7 @@ useEffect(() => {
             
 
               <div className="p-4 space-y-6">
-      {/* Opening Section */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-lg font-medium mb-4">Opening</h3>
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center gap-2">
-            <label className="w-32 font-medium text-gray-700">KM:</label>
-            <input
-              name="openKm"
-              type="number"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={data.openKm}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="flex flex-col md:flex-row md:items-center gap-2">
-            <label className="w-32 font-medium text-gray-700">Date:</label>
-            <input
-              type="date"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 bg-gray-200 cursor-not-allowed"
-              value={tripDetails.reportingDate ?tripDetails.reportingDate : ""}
-              readOnly
-            />
-          </div>
-          <div className="flex flex-col md:flex-row md:items-center gap-2">
-            <label className="w-32 font-medium text-gray-700">Hours:</label>
-            <input
-              name="openHr"
-              type="time"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={data.openHr}
-              onChange={handleInputChange}
-            />
-          </div>
-        </div>
-      </div>
+      
 
       {/* Closing Section */}
       <div className="bg-gray-50 rounded-lg p-4">
@@ -403,14 +445,8 @@ useEffect(() => {
                                 <h3 className="font-medium mb-2">Guest Signature</h3>
                                 {guestSignature ? (
                                     <div className="mb-2">
-                                        <img src={guestSignature} alt="Guest Signature" className="h-20 border" />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowGuestModal(true)}
-                                            className="ml-2 text-blue-600 hover:text-blue-800"
-                                        >
-                                            Re-sign
-                                        </button>
+                                        <img src={tripDetails.guest_url!=null?`http://localhost:3000/api/get-signature/${guestSignature}`:guestSignature} alt="Guest Signature" className="h-20 border" />
+                                       
                                     </div>  
                                 ) : (
                                     <button
@@ -446,6 +482,7 @@ useEffect(() => {
                                         Clear
                                     </button>
                                     <button
+                                      type="button" // Add this line
                                         onClick={handleSaveGuestSignature}
                                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                                     >
@@ -505,7 +542,76 @@ useEffect(() => {
         </form>
       </div>
     </div>
-    ):( <p>Loading trip details...</p>)}
+      </div>:
+      
+      <div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+  <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md">
+    <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center">Opening Details </h3>
+
+    <div className="space-y-4">
+
+          {/* Date */}
+          <div className="flex flex-col">
+        <label className="font-medium text-gray-700 mb-1">Date:</label>
+        <input
+          type="date"
+          className="rounded-md border border-gray-300 px-3 py-2 bg-gray-100 cursor-not-allowed text-gray-600"
+          value={tripDetails?.reportingDate || ""}
+          readOnly
+        />
+      </div>
+
+
+      {/* Hours */}
+      <div className="flex flex-col">
+        <label className="font-medium text-gray-700 mb-1">Hours:</label>
+        <input
+          name="openHr"
+          type="time"
+         className="rounded-md border border-gray-300 px-3 py-2 bg-gray-100 cursor-not-allowed text-gray-600"
+          value={tripDetails?.reportingTime}
+          
+          readOnly
+        />
+      </div>
+      
+      {/* KM Input */}
+      <div className="flex flex-col">
+        <label className="font-medium text-gray-700 mb-1">KM:</label>
+        <input
+        name="openKm"
+        type="number"
+        ref={openKmRef}
+        className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Enter KM"
+      />
+      </div>
+
+  
+
+    </div>
+
+    {/* Start Duty Button */}
+    <button
+      onClick={handleStartDuty}
+      className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+    >
+      Start Duty
+    </button>
+  </div>
+</div>
+      </div>
+    }
+   
+   </> ):( <>
+    <div className="flex justify-center items-center h-screen">
+  <h1 className="text-xl font-semibold text-gray-700">Loading .....</h1>
+</div>
+
+   
+
+      </>)}
     </>
 }
 
