@@ -308,12 +308,10 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
   }, [searchQuery, selectedType, selectedSearch]);
     
   const handleAssignedTrips = () => {
+    setAssignedModal(pre=>!pre); // just open modal
     if (assignedModal) {
       fetchedAssignedTrip(); // if modal is already open, refresh data
-    } else {
-      setAssignedModal(true); // just open modal
-      fetchedAssignedTrip();  // and fetch fresh data
-    }
+    } 
   };
   
     // Memoized status buttons
