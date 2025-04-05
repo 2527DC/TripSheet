@@ -123,9 +123,10 @@ function App() {
       
           {/* Protected Routes */}
           <Route element={<Layout />}>
-            <Route path="/" element={<TripSheetForm />} />
+            
         
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+            <Route path="/" element={<TripSheetForm />} />
               <Route path="/clients" element={<ManageCompany />} />
               <Route path="/tripsheet-list" element={<TripSheet />} />
               <Route path="/tripsheets" element={<TripSheetForm />} />
