@@ -1,5 +1,5 @@
 export  const LOGIN="login"
-export const  Companys="companys"
+export const  Companys="companies"
 export const CreateDriver="createDriver"
 export const CreatVehicle="create-vehicle"
 export const Create_ADMIN="create-admin"
@@ -13,7 +13,7 @@ export const API ={
     rejectedTrips:"get-rejectedTrips",
     createDriver:"createDriver",
     login:"login",
-    companys:"companys",
+    companys:"companies",
     creatVehicle:"create-vehicle",
     create_ADMIN:"create-admin",
     editField:"editField",

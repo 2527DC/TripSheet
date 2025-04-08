@@ -5,6 +5,7 @@ import { X, Search, Truck, Users, Building2, Plus, PlusCircle, LogIn } from "luc
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { InputField, Modal } from "../components/SmallComponents";
+import Select from "react-select";
 
 
 const TripSheetForm = () => {
@@ -192,7 +193,7 @@ useEffect(() => {
     }
   const fetchCompanyList= async()=>{
     
-       const  companys= await LocalClient.get(Companys)
+       const  companys= await LocalClient.get(`${Companys}?search=${searchCompany}`)
   
        if (companys.status===200) {
          setCompanies(companys.data)
@@ -1161,25 +1162,78 @@ const memoizedFormVendors = useMemo(() => (
             <h3 className="text-lg font-semibold text-gray-800">Passenger Details</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-  {passengerInput.map((input, index) =>
-    input.type !== "select" ? (
-      <div key={index} className="space-y-1">
+          {passengerInput.map((input, index) =>
+        input.type !== "select" ? (
+          <div key={index} className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">{input.label}</label>
+            <input
+        name={input.name}
+        type={input.type}
+        placeholder={input.placeholder}
+        value={data[input.name] || ""}
+        onChange={handleInputChange}
+        readOnly={readOnlyFields.includes(input.name)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+    </div>
+  ) : (
+    <div key={index} className="space-y-1 relative flex items-center gap-2">
+      <div className="w-full">
         <label className="block text-sm font-medium text-gray-700">{input.label}</label>
-        <input
-          name={input.name}
-          type={input.type}
-          placeholder={input.placeholder}
-          value={data[input.name] || ""}
-          onChange={handleInputChange}
-          readOnly={readOnlyFields.includes(input.name)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-    ) : (
-      <div key={index} className="space-y-1 relative flex items-center gap-2">
-        <div className="w-full">
-          <label className="block text-sm font-medium text-gray-700">{input.label}</label>
-          <select
+        {input.name === "customer" ? (
+          <Select
+            name={input.name}
+            value={
+              input.options.find(option => option.value === data[input.name]) || null
+            }
+            onChange={(selectedOption) =>
+              handleInputChange({ target: { name: input.name, value: selectedOption?.value } })
+            }
+            styles={{
+              control: (base, state) => ({
+                ...base,
+                width: '100%',
+                padding: '2px',
+                backgroundColor: '#f3f4f6',
+                borderRadius: '0.5rem', // rounded-lg
+                border: `1px solid ${state.isFocused ? '#3b82f6' : '#d1d5db'}`, // blue-500 or gray-300
+                boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.4)' : 'none', // ring-blue-500
+                '&:hover': {
+                  borderColor: '#3b82f6',
+                },
+              }),
+              menu: (base) => ({
+                ...base,
+                zIndex: 20,
+                borderRadius: '0.5rem',
+              }),
+              option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isSelected
+                  ? '#3b82f6'
+                  : state.isFocused
+                  ? '#e0f2fe'
+                  : '#fff',
+                color: state.isSelected ? '#fff' : '#000',
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+              }),
+              placeholder: (base) => ({
+                ...base,
+                color: '#9ca3af', // text-gray-400
+              }),
+              singleValue: (base) => ({
+                ...base,
+                color: '#111827', // text-gray-900
+              }),
+            }}
+            options={input.options}
+            placeholder={input.placeholder}
+            isSearchable
+
+          />
+        ) : (
+          <select 
             name={input.name}
             value={data[input.name] || ""}
             onChange={handleInputChange}
@@ -1191,21 +1245,21 @@ const memoizedFormVendors = useMemo(() => (
               </option>
             ))}
           </select>
-        </div>
-
-        {/* 🔹 Plus Button (Only for Customer Select) */}
-        {input.name === "customer" && (
-          <button
-          className="p-2 rounded-full text-blue-500 hover:text-blue-700"
-            onClick={ ()=>setCreateCustomer(true)} // Replace with your function
-           
-          >
-             <PlusCircle size={20} />
-          </button>
         )}
       </div>
-    )
-  )}
+
+      {input.name === "customer" && (
+        <button
+          className="p-2 rounded-full text-blue-500 hover:text-blue-700"
+          onClick={() => setCreateCustomer(true)}
+        >
+          <PlusCircle size={20} />
+        </button>
+      )}
+    </div>
+  )
+)}
+
 </div>
 
         </div>
