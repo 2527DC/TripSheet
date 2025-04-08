@@ -6,9 +6,9 @@ import axios from "axios";
 // });
 
 
-export const LocalClient = axios.create({
-  baseURL: "https://api.mltcorporate.com/api/",
-});
+  export const LocalClient = axios.create({
+    baseURL: "https://api.mltcorporate.com/api/",
+  });
 
 
 

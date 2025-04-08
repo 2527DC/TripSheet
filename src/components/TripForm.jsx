@@ -236,16 +236,18 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
         // Set trip data
         setAssignedTrip(response.data.data);
     
-        // Open the modal or show the component
-      
-    
         console.log("Assigned trips fetched and modal opened");
       } catch (error) {
         console.error("Error fetching assigned trips:", error);
       }
     }, []);
     
-
+    useEffect(() => {
+      if (assignedModal) {
+        fetchedAssignedTrip();
+      }
+    }, [assignedModal, fetchedAssignedTrip]);
+    
     const fetchedRejectedTrip = useCallback(async () => {
       try {
            const  response=await LocalClient.get(API.rejectedTrips)
@@ -309,9 +311,6 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
     
   const handleAssignedTrips = () => {
     setAssignedModal(pre=>!pre); // just open modal
-    if (assignedModal) {
-      fetchedAssignedTrip(); // if modal is already open, refresh data
-    } 
   };
   
     // Memoized status buttons
