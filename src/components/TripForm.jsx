@@ -553,10 +553,12 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
 
 
 const AssignedTripList = React.memo(({ trips, onDelete }) => {
+  console.log(" this is the trips ",trips);
+  
   const renderedTrips = useMemo(() => {
     return trips?.map((trip, index) => (
       <tr key={index} className="hover:bg-gray-50">
-        <td className="px-4 py-2">{new Date(trip.createdAt).toLocaleDateString()}</td>
+        <td className="px-4 py-2">{trip.reportingDate}</td>
         <td className="px-4 py-2">{trip.customer}</td>
         <td className="px-4 py-2">{trip.driverName}</td>
         <td className="px-4 py-2">{trip.vehicleNo}</td>
