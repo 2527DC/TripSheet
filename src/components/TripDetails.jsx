@@ -514,7 +514,7 @@ const handlePrint = async () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="bg-gray-50 p-4 rounded-lg flex flex-col gap-3">
+     <div className="bg-gray-50 p-4 rounded-lg flex flex-col gap-3">
             <h3 className="font-medium text-gray-700 mb-2">Actions</h3>
             <button
             onClick={handleDownloadReport}
@@ -530,7 +530,9 @@ const handlePrint = async () => {
             <Printer size={18} />
             Print
           </button>
-             {canEdit?( <><button
+          {canEdit && trip.status !== "Completed"  ? (
+          <>
+            <button
               onClick={() => handleUpdateStatus("Approved")}
               className="flex items-center justify-center gap-2 w-full bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors"
             >
@@ -543,7 +545,10 @@ const handlePrint = async () => {
             >
               <XCircle size={18} />
               Reject
-            </button></>):null}
+            </button>
+          </>
+        ) : null}
+
           </div>
           {isGeneratingPDF && (
         <div style={{ position: 'absolute', left: '-9999px' }}>
