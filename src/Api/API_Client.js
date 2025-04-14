@@ -15,3 +15,5 @@ import axios from "axios";
 
 //  export const imageUrl = "http://localhost:3000/api/get-signature/";
 export const imageUrl = "https://api.mltcorporate.com/api/get-signature/";
+
+// "Karthik " "operations@mltcorporate.com" "Ops@mlt$72" "ADMIN"

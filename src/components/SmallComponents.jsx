@@ -28,15 +28,46 @@ export const Modal = ({ isOpen, onClose, children, title }) => {
   );
 };
 
+
+
 export const InputField = ({ label, type, option, ...props }) => {
   // Prevent non-numeric input for "tel" type
   const handleKeyDown = (e) => {
     if (type === "tel") {
-      if (!/[\d\bArrowLeftArrowRightDelete]/.test(e.key)) {
+      // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+      if ([
+        'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+        'Home', 'End'
+      ].includes(e.key)) {
+        return;
+      }
+
+      // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X (Windows/Linux)
+      // Allow: Cmd+A, Cmd+C, Cmd+V, Cmd+X (Mac)
+      if (
+        (e.ctrlKey || e.metaKey) && 
+        ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())
+      ) {
+        return;
+      }
+
+      // Block any non-numeric input
+      if (!/^\d$/.test(e.key)) {
         e.preventDefault();
       }
     }
   };
+
+  const handlePaste = (e) => {
+    if (type === "tel") {
+      const pasteData = e.clipboardData.getData('text/plain');
+      if (!/^\d*$/.test(pasteData)) {
+        e.preventDefault();
+      }
+    }
+  };
+
 
   return (
     <div className="mb-4">
@@ -66,6 +97,7 @@ export const InputField = ({ label, type, option, ...props }) => {
           maxLength={type === "tel" ? 10 : undefined} // 🔥 Restrict phone number to 10 digits
           pattern={type === "tel" ? "[0-9]{10}" : undefined} // 🔥 Ensure exactly 10 digits in validation
           inputMode={type === "tel" ? "numeric" : "text"} // 🔥 Optimize mobile keyboard
+          onPaste={handlePaste} 
           {...props}
         />
       )}

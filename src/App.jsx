@@ -18,7 +18,7 @@ import DutySlip from "./components/DutySlip";
 import DriverView from "./pages/DriverView";
 import ManageAdmins from "./pages/ManageAdmins";
 import ManageCategory from "./components/ManangeCategory";
-
+import { CheckCircle2 } from "lucide-react";
 
 // ✅ Layout component for authenticated pages
 
@@ -116,10 +116,11 @@ function App() {
 
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login />}/>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/driver-form" element={<DriverView />} />
           <Route path="/duty-slip" element={<DutySlip/>} />
+          <Route path="/submitted" element={<SuccessMessage/>} />
       
           {/* Protected Routes */}
           <Route element={<Layout />}>
@@ -146,3 +147,19 @@ function App() {
 }
 
 export default App;
+
+
+
+const SuccessMessage = ({ onClose }) => {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8 bg-white shadow-md rounded-2xl max-w-md mx-auto">
+      <CheckCircle2 className="text-green-500" size={80} />
+      <h2 className="text-2xl font-semibold text-gray-800 mt-4">Submitted Successfully!</h2>
+      <p className="text-gray-600 mt-2 mb-6">
+        Your trip sheet has been submitted. Thank you!
+      </p>
+     
+    </div>
+  );
+};
+

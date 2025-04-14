@@ -26,5 +26,8 @@ export const API ={
     updateDriver:"update-driver",
     editCustomer:"edit-customer",
     deleteAdmin:"delete-admin",
-    updatePassword:"update-password"
+    updatePassword:"update-password",
+    deletTrip:"delete-tripsheet",
+    downloaded:"updateCompleted",
+    completedTrips:"get-completedTrips"
 }

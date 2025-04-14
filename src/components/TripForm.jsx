@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { TripList } from "./Trips";
-import { CheckCircle, Clock, Clock10, FileSpreadsheet, History, Plus, Search, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Clock, Clock10, FileSpreadsheet, History, ListChecks, LucideListChecks, Plus, Search, Trash2, Trash2Icon, TrashIcon, Truck, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LocalClient } from "../Api/API_Client";
 import TripDetails from "./TripDetails";
@@ -14,7 +14,7 @@ import { API } from "../Api/Endpoints";
 const StatusButton = memo(({ Icon, text, colorClass, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-4 py-2 ${colorClass} rounded-lg hover:bg-opacity-75 transition-colors`}
+    className={`flex items-center gap-2 px-2 py-2 ${colorClass} rounded-lg hover:bg-opacity-75 transition-colors`}
   >
     <Icon size={20} />
     {text}
@@ -183,7 +183,8 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
           setIsOpen(true)
           console.log(" this is the Log responce " ,response.data);
           
-         setAuditLogs(response.data) 
+          setAuditLogs([...response.data].reverse());
+
         toast.success("Logs Fetched")
         }
        
@@ -210,6 +211,23 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
       }
     }, []);
 
+     
+    const fetchedCompletedTrips = useCallback(async () => {
+ 
+      try {
+
+        const  response=await LocalClient.get(API.completedTrips)
+
+        if (response.status===200) {
+          toast.success(`Completed Trips Fetched ${response.data.completedTrips.length}`)
+          setTrips(response.data.completedTrips)
+        }
+        
+      } catch (error) {
+        console.log("ERROR ",error);
+        toast.error("SERVER IS BUSY")
+      }
+    }, []);
 
 
     const fetchedPendingTrip = useCallback(async () => {
@@ -341,6 +359,18 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
       }
     ], [fetchedPendingTrip, fetchedAssignedTrip,fetchedApprovedTrips, fetchedRejectedTrip]);
 
+    const handleDelete = async (tripId) => {
+      try {
+        const res = await LocalClient.delete(`${API.deletTrip}/${tripId}`)
+    
+        setAssignedTrip((prev) => prev.filter((trip) => trip.id !== tripId));
+      } catch (error) {
+        console.error('Error deleting trip:', error.message);
+      toast.error('Error deleting trip: ' + error.message);
+      }
+    };
+    
+
   return (<>
     {!selectedTrip?(
       <div className="container mx-auto p-4">
@@ -361,16 +391,23 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
                   colorClass="text-green-600 bg-green-50"
                 />
               )}
+               <StatusButton
+                onClick={fetchedCompletedTrips}
+                Icon={LucideListChecks}
+                text="Completed"
+                colorClass="text-green-600 bg-green-200"
+              />
               <StatusButton
                 onClick={handleDownload}
                 Icon={FileSpreadsheet}
                 text="Export"
                 colorClass="text-green-600 bg-green-50"
               />
+              
               <StatusButton
                 onClick={handleNewClick}
                 Icon={Plus}
-                text="New Trip"
+                text="New"
                 colorClass="bg-blue-600 text-white hover:bg-blue-700"
               />
             </div>
@@ -495,7 +532,7 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
              {loading ? (
               <LoadingSpinner />
             ) : (<>
-             {  assignedModal?<AssignedTripList trips={assignedTrips} />:<MemoizedTripList trips={trips} setSelectedTrip={setSelectedTrip} />}  
+             {  assignedModal?<AssignedTripList trips={assignedTrips}  onDelete={handleDelete}/>:<MemoizedTripList trips={trips} setSelectedTrip={setSelectedTrip} />}  
             </>
           
             )}  
@@ -511,54 +548,45 @@ const handleNewClick = useCallback(() => navigate("/tripsheets"), [navigate]);
     </>
   );
 }
-// Dummy data: all trips are "Not Started"
-const dummyTrips = [
-  { date: '2025-04-05T08:00:00Z', passengerName: 'Alice Johnson', vehicleNo: 'MH12AB1001', openKm: null },
-  { date: '2025-04-05T08:30:00Z', passengerName: 'Bob Smith', vehicleNo: 'MH12AB1002', openKm: 210 },
-  { date: '2025-04-05T09:00:00Z', passengerName: 'Carol White', vehicleNo: 'MH12AB1003', openKm: null },
-  { date: '2025-04-05T09:30:00Z', passengerName: 'David Lee', vehicleNo: 'MH12AB1004', openKm: 180 },
-  { date: '2025-04-05T10:00:00Z', passengerName: 'Ella Brown', vehicleNo: 'MH12AB1005', openKm: null },
-  { date: '2025-04-05T10:30:00Z', passengerName: 'Frank Martin', vehicleNo: 'MH12AB1006', openKm: 230 },
-  { date: '2025-04-05T11:00:00Z', passengerName: 'Grace Thomas', vehicleNo: 'MH12AB1007', openKm: null },
-  { date: '2025-04-05T11:30:00Z', passengerName: 'Henry Young', vehicleNo: 'MH12AB1008', openKm: 240 },
-  { date: '2025-04-05T12:00:00Z', passengerName: 'Ivy Wilson', vehicleNo: 'MH12AB1009', openKm: null },
-  { date: '2025-04-05T12:30:00Z', passengerName: 'Jack Davis', vehicleNo: 'MH12AB1010', openKm: 200 },
-];
 
-// AssignedTripList component wrapped in React.memo for performance
-const AssignedTripList = React.memo(({ trips = dummyTrips }) => {
-  // Memoized list (already all are "Not Started")
+
+
+
+const AssignedTripList = React.memo(({ trips, onDelete }) => {
   const renderedTrips = useMemo(() => {
     return trips?.map((trip, index) => (
-      <tr key={index} className=" hover:bg-gray-50">
-        <td className="px-4 py-2">{new Date(trip.date).toLocaleDateString()}</td>
+      <tr key={index} className="hover:bg-gray-50">
+        <td className="px-4 py-2">{new Date(trip.createdAt).toLocaleDateString()}</td>
         <td className="px-4 py-2">{trip.customer}</td>
         <td className="px-4 py-2">{trip.driverName}</td>
         <td className="px-4 py-2">{trip.vehicleNo}</td>
         <td className="px-4 py-2">
-        <span
-  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs 
-    ${
-      trip.openKm
-        ? 'bg-green-200 text-green-800'
-        : 'bg-red-200 text-red-800'
-    }`}
->
-  {trip.openKm ? (
-    <Clock10 size={14} className="text-green-600" />
-  ) : (
-    <Clock10 size={14} className="text-red-600" />
-  )}
-  {trip.openKm ? 'Duty Started' : 'Not Started'}
-</span>
-
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs 
+              ${
+                trip.openKm
+                  ? 'bg-green-200 text-green-800'
+                  : 'bg-red-200 text-red-800'
+              }`}
+          >
+            <Clock10 size={14} className={trip.openKm ? 'text-green-600' : 'text-red-600'} />
+            {trip.openKm ? 'Duty Started' : 'Not Started'}
+          </span>
+        </td>
+        <td className="px-4 py-2">
+          <button
+            onClick={() => onDelete(trip.id)}
+            className="text-red-600 hover:underline text-xs"
+          >
+           <Trash2 size={18}/>
+          </button>
         </td>
       </tr>
     ));
-  }, [trips]);
+  }, [trips, onDelete]);
 
   return (
-    <div className=" rounded-lg shadow bg-white max-h-[400px] overflow-y-auto border">
+    <div className="rounded-lg shadow bg-white max-h-[400px] overflow-y-auto border">
       <table className="min-w-full text-sm text-left">
         <thead className="bg-gray-100 sticky top-0 z-10">
           <tr>
@@ -567,6 +595,7 @@ const AssignedTripList = React.memo(({ trips = dummyTrips }) => {
             <th className="px-4 py-2">Driver Name</th>
             <th className="px-4 py-2">Vehicle No</th>
             <th className="px-4 py-2">Status</th>
+            <th className="px-4 py-2">Action</th>
           </tr>
         </thead>
         <tbody>{renderedTrips}</tbody>
@@ -574,6 +603,7 @@ const AssignedTripList = React.memo(({ trips = dummyTrips }) => {
     </div>
   );
 });
+
 
 
 // Memoized child components

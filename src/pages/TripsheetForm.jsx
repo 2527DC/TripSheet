@@ -107,12 +107,11 @@ const TripSheetForm = () => {
     }, [search]);
   
   
-  
     const handleCustomerInputChange = useCallback((e) => {
       const { name, value } = e.target;
       setCustomerData(prev => ({ ...prev, [name]: value }));
     }, []);
-  
+    
     // 🔹 Fetch vehicles for modal search
   useEffect(() => {
    
@@ -909,16 +908,18 @@ const memoizedFormVendors = useMemo(() => (
       <Modal isOpen={createCustomer} onClose={() => setCreateCustomer(false)} title="Add New Customer">
               <form onSubmit={handleCustomerSubmit} className="space-y-6">
                 {CustomerInput.map((input) => (
-                  <InputField
-                    key={input.id}
-                    label={input.label}
-                    type={input.type}
-                    name={input.name}
-                    value={customerData[input.name]}
-                    onChange={handleCustomerInputChange}
-                    placeholder={input.placeholder}
-                    required
-                  />
+                 <InputField
+                 key={input.id}
+                 label={input.label}
+                 type={input.type}
+                 name={input.name}
+                 value={customerData[input.name]}
+                 onChange={handleCustomerInputChange}
+               
+                 placeholder={input.placeholder}
+                 required
+               />
+               
                 ))}
                 <div className="flex justify-end gap-3 pt-4">
                   <button type="button" onClick={() => setCreateCustomer(false)} className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">

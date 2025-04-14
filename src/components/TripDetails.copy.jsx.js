@@ -8,8 +8,6 @@ import DutySlip from "./DutySlip";
 import generatePDF from '../utils/pdfUtils'
 import ReactDOM from 'react-dom';
 import { useReactToPrint } from 'react-to-print';
-import DutySlipPrint from "./DutySlipPrint";
-import { API } from "../Api/Endpoints";
 // Move getRatingLabel outside the component to make it globally accessible in this file
 const getRatingLabel = (rating) => {
   const ratingLabels = {
@@ -180,7 +178,7 @@ const TripDetails = ({ selectedTrip, goBack ,updateTrip}) => {
 
   const driverFields = [
     { label: "Open Km", key: "openKm" },
-    { label: "Open Hr", key: "reportingTime" },
+    { label: "Open Hr", key: "openHr" },
     { label: "Close Km", key: "closeKm" },
     { label: "Close Hr", key: "closeHr" },
     { label: "Parking", key: "parkingCharges" },
@@ -196,87 +194,32 @@ const TripDetails = ({ selectedTrip, goBack ,updateTrip}) => {
   const dutySlipRef = useRef(null); // Ref to access the DutySlip DOM
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false); // State to control rendering
   
-  const handleDownloadReport = async () => {
+  const handleDownloadReport = () => {
     console.log('This is the data sending for PDF:', trip);
-    try {
-      
-      const response = await LocalClient.patch(`${API.downloaded}/${selectedTrip.formId}`)
-    console.log(" this is the form id ",selectedTrip.formId);
- 
-    if (response.status===200) {
-      setIsGeneratingPDF(true);
-    }
-    
-    } catch (error) {
-      console.log(" Error ", error);
-    }
-  
+    setIsGeneratingPDF(true); // Show DutySlip temporarily to generate PDF
   }
+// Handle print
+const handlePrint = () => {
+  // Create a temporary container
+  const printContainer = document.createElement('div');
+  document.body.appendChild(printContainer);
 
-const handlePrint = async () => {
-  try {
-    // 🛰️ 1. Backend request before printing
-    const response = await LocalClient.patch(`${API.downloaded}/${selectedTrip.formId}`)
-  if (response.status===200) {
-    
-  }
-    // ✅ 2. Proceed with print logic after successful request
-    const printContainer = document.createElement('div');
-    printContainer.id = 'print-container';
-    document.body.appendChild(printContainer);
-
-    // 🖨️ 3. Optional: Add print styles
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media print {
-        @page {
-          margin: 0;
-        }
-        body * {
-          visibility: hidden;
-        }
-        #print-container, #print-container * {
-          visibility: visible;
-        }
-        #print-container {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100vw;
-          height: 100vh;
-          overflow: hidden;
-          page-break-inside: avoid;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-
-    const root = ReactDOM.createRoot(printContainer);
-    root.render(
-      <div style={{
-        border: '1px solid #000',
-        padding: '10px',
-        maxWidth: '210mm',
-        margin: '0 auto'
-      }}>
-        <DutySlipPrint dutyData={selectedTrip} />
-      </div>
-    );
-
-    setTimeout(() => {
+  // Render ONLY the DutySlip component with current trip data
+  ReactDOM.render(
+    <DutySlip dutyData={trip} />,  // This is your existing DutySlip component
+    printContainer,
+    () => {
+      // Focus and print
       window.focus();
       window.print();
-
+      
+      // Clean up after printing
       setTimeout(() => {
-        root.unmount();
+        ReactDOM.unmountComponentAtNode(printContainer);
         document.body.removeChild(printContainer);
-        document.head.removeChild(style);
       }, 500);
-    }, 500);
-  } catch (error) {
-    console.error('Print error:', error.message);
-    alert('Could not print: ' + error.message);
-  }
+    }
+  );
 };
 
   // Effect to trigger PDF generation after DutySlip is rendered
@@ -344,7 +287,7 @@ const handlePrint = async () => {
   const renderEditableField = (key, label, type = "input") => {
 
     const isEditing = editingFields[key];
-
+   
     return (
       <div className="bg-gray-50 p-3 rounded-lg" key={key}>
         <div className="flex justify-between items-center mb-1">
